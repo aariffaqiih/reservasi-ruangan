@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="id">
+<head th:replace="~{layout :: head(${pageTitle})}"></head>
+<body>
+    <div th:replace="~{layout :: sidebar}"></div>
+    <div class="main-wrapper">
+        <div th:replace="~{layout :: topbar(${pageTitle})}"></div>
+        <div class="content-area">
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="fw-bold mb-0">
+                                <i class="fas fa-tag text-primary me-2"></i>
+                                <span th:text="${pageTitle}">Form Tag</span>
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <form th:action="${tag.id == null} ? @{/tags/create} : @{'/tags/edit/' + ${tag.id}}"
+                                  th:object="${tag}"
+                                  method="post">
+
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-tag text-muted me-1"></i>
+                                        Nama Tag <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control"
+                                           th:field="*{name}"
+                                           th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"
+                                           placeholder="Contoh: Java, Spring Boot, Tutorial">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}"
+                                         th:errors="*{name}">Error</div>
+                                    <div class="form-text">Nama tag harus unik</div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-palette text-muted me-1"></i>
+                                        Warna Tag
+                                    </label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <input type="color" class="form-control form-control-color"
+                                               th:field="*{color}"
+                                               style="width:60px;height:40px;padding:4px;border-radius:8px"
+                                               id="colorPicker">
+                                        <span id="colorPreview" class="badge px-3 py-2 fs-6">
+                                            # Preview Tag
+                                        </span>
+                                    </div>
+                                    <div class="form-text">Pilih warna untuk tampilan badge tag</div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        <span th:text="${tag.id == null} ? 'Simpan Tag' : 'Update Tag'">Simpan</span>
+                                    </button>
+                                    <a th:href="@{/tags}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{layout :: scripts}"></div>
+    <script>
+        // Live preview warna tag
+        function updatePreview() {
+            var color = $('#colorPicker').val();
+            var name = $('input[name="name"]').val() || 'Preview Tag';
+            $('#colorPreview').css('background-color', color).text('# ' + name);
+        }
+
+        $('#colorPicker').on('input', updatePreview);
+        $('input[name="name"]').on('input', updatePreview);
+
+        // Init preview saat load
+        updatePreview();
+    </script>
+</body>
+</html>

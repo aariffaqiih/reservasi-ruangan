@@ -1,0 +1,23 @@
+<!--
+    Penanggung jawab: 'Aarif Rahmaan Jalaluddin Faqiih dan Ali Abdul Fattah 'Alim Kautsar.
+
+    Arahan dari class-diagram:
+    - Template daftar Reservation nanti menampilkan:
+      reservationId: String
+      mahasiswa: Mahasiswa
+      room: Room
+      tanggal: LocalDate
+      jamMulai: LocalTime
+      jamSelesai: LocalTime
+      tujuan: String
+      status: ReservationStatus
+      createdAt: LocalDateTime
+      cancelledAt: LocalDateTime
+      approval: Approval
+      accessRecord: AccessRecord
+    - Behaviour UI:
+      lihatStatusReservasi()
+      batalkanReservasi()
+      getReservationHistory()
+    - Tombol batalkan hanya muncul jika isCanBeCancelled() bernilai benar.
+-->

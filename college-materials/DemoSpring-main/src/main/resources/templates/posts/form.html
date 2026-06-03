@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="id">
+<head th:replace="~{layout :: head(${pageTitle})}"></head>
+<body>
+    <div th:replace="~{layout :: sidebar}"></div>
+    <div class="main-wrapper">
+        <div th:replace="~{layout :: topbar(${pageTitle})}"></div>
+        <div class="content-area">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="fw-bold mb-0">
+                                <i class="fas fa-file-alt text-success me-2"></i>
+                                <span th:text="${pageTitle}">Form Post</span>
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <form th:action="${post.id == null} ? @{/posts/create} : @{'/posts/edit/' + ${post.id}}"
+                                  th:object="${post}" method="post">
+
+                                <!-- Pilih User -->
+                                <div class="mb-3" th:if="${post.id == null}">
+                                    <label class="form-label">
+                                        <i class="fas fa-user text-muted me-1"></i>Author (User) <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="userId" class="form-select" required>
+                                        <option value="">-- Pilih User --</option>
+                                        <option th:each="u : ${users}"
+                                                th:value="${u.id}"
+                                                th:selected="${param.userId != null && param.userId[0] == u.id.toString()}"
+                                                th:text="${u.username}">User</option>
+                                    </select>
+                                </div>
+
+                                <div th:if="${post.id != null}" class="mb-3 p-3 bg-light rounded-3">
+                                    <small class="text-muted">Author:</small>
+                                    <div class="fw-semibold" th:text="${post.user.username}">-</div>
+                                </div>
+
+                                <!-- Judul -->
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-heading text-muted me-1"></i>Judul <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control"
+                                           th:field="*{title}"
+                                           th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
+                                           placeholder="Masukkan judul post">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}"
+                                         th:errors="*{title}">Error</div>
+                                </div>
+
+                                <!-- Konten -->
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-align-left text-muted me-1"></i>Konten
+                                    </label>
+                                    <textarea class="form-control" th:field="*{content}" rows="5"
+                                              placeholder="Tulis konten post..."></textarea>
+                                </div>
+
+                                <!-- Status -->
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-tag text-muted me-1"></i>Status
+                                    </label>
+                                    <select class="form-select" th:field="*{status}">
+                                        <option th:each="s : ${statuses}"
+                                                th:value="${s}" th:text="${s}">Status</option>
+                                    </select>
+                                </div>
+
+                                <!-- TAGS - MANY-TO-MANY -->
+                                <div class="mb-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-tags text-muted me-1"></i>Tags
+                                        <span class="badge bg-warning text-dark ms-1">Many-to-Many</span>
+                                    </label>
+                                    <div th:if="${#lists.isEmpty(allTags)}" class="text-muted small p-3 bg-light rounded-3">
+                                        Belum ada tag. <a th:href="@{/tags/create}">Buat tag dulu</a>
+                                    </div>
+                                    <div th:if="${!#lists.isEmpty(allTags)}"
+                                         class="p-3 border rounded-3 d-flex flex-wrap gap-2">
+                                        <div th:each="tag : ${allTags}" class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                   name="tagIds"
+                                                   th:value="${tag.id}"
+                                                   th:id="'tag-' + ${tag.id}"
+                                                   th:checked="${post.tags != null && post.tags.contains(tag)}">
+                                            <label class="form-check-label" th:for="'tag-' + ${tag.id}">
+                                                <span class="badge"
+                                                      th:style="'background:' + ${tag.color} + ';color:white'"
+                                                      th:text="'# ' + ${tag.name}">tag</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="form-text">Pilih satu atau lebih tag untuk post ini</div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save me-2"></i>
+                                        <span th:text="${post.id == null} ? 'Simpan Post' : 'Update Post'">Simpan</span>
+                                    </button>
+                                    <a th:href="@{/posts}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{layout :: scripts}"></div>
+</body>
+</html>
