@@ -15,3 +15,15 @@ package com.tup.reservasi.controller;
  *   daftar Notification milik Mahasiswa bila fitur notifikasi sudah aktif.
  * - File ini tetap komentar sampai fitur mahasiswa mulai dikerjakan.
  */
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class MahasiswaController {
+
+    @GetMapping("/mahasiswa")
+    public String mahasiswaHome() {
+        return "mahasiswa/dashboard";
+    }
+}
