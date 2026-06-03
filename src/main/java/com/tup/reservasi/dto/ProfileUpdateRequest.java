@@ -1,5 +1,10 @@
 package com.tup.reservasi.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 /*
  * Penanggung jawab: Amelia Sofiana Makharomi.
  *
@@ -16,12 +21,23 @@ package com.tup.reservasi.dto;
 
 public class ProfileUpdateRequest {
 
+    @NotBlank(message = "Nama tidak boleh kosong")
+    @Size(max = 100, message = "Nama maksimal 100 karakter")
     private String nama;
+
+    @NotBlank(message = "Email tidak boleh kosong")
+    @Email(message = "Format email tidak valid")
+    @Size(max = 100, message = "Email maksimal 100 karakter")
     private String email;
+
+    @Size(max = 20, message = "Nomor HP maksimal 20 karakter")
     private String noHp;
 
+    @Size(max = 100, message = "Prodi maksimal 100 karakter")
     // Khusus Mahasiswa
     private String prodi;
+
+    @Min(value = 2000, message = "Angkatan tidak valid")
     private Integer angkatan;
 
     public ProfileUpdateRequest() {

@@ -30,6 +30,7 @@ public class RoomService {
     @Transactional
     public Room createRoom(Room room) {
         // Simple creation; additional validation can be added later.
+        validateRoom(room);
         return roomRepository.save(room);
     }
 
@@ -63,6 +64,7 @@ public class RoomService {
     // UPDATE
     @Transactional
     public Room updateRoom(Room updatedRoom) {
+        validateRoom(updatedRoom);
         Room existing = roomRepository.findById(updatedRoom.getRoomId())
                 .orElseThrow(() -> new IllegalArgumentException("Room not found"));
         existing.setNamaRuang(updatedRoom.getNamaRuang());
@@ -104,5 +106,19 @@ public class RoomService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found"));
         return room.getInfoRuang();
+    }
+    private void validateRoom(Room room) {
+        if (room == null) {
+            throw new IllegalArgumentException("Room tidak boleh kosong");
+        }
+        if (room.getNamaRuang() == null || room.getNamaRuang().isBlank()) {
+            throw new IllegalArgumentException("Nama ruang tidak boleh kosong");
+        }
+        if (room.getGedung() == null || room.getGedung().isBlank()) {
+            throw new IllegalArgumentException("Gedung tidak boleh kosong");
+        }
+        if (room.getKapasitas() < 1) {
+            throw new IllegalArgumentException("Kapasitas minimal 1");
+        }
     }
 }

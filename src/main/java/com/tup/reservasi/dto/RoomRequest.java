@@ -1,5 +1,9 @@
 package com.tup.reservasi.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 /*
  * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
  *
@@ -15,9 +19,17 @@ package com.tup.reservasi.dto;
 
 public class RoomRequest {
 
+    @NotBlank(message = "Nama ruang tidak boleh kosong")
+    @Size(max = 100, message = "Nama ruang maksimal 100 karakter")
     private String namaRuang;
+
+    @NotBlank(message = "Gedung tidak boleh kosong")
+    @Size(max = 100, message = "Gedung maksimal 100 karakter")
     private String gedung;
+
+    @Min(value = 1, message = "Kapasitas minimal 1")
     private int kapasitas;
+
     private boolean statusAktif;
 
     public RoomRequest() {

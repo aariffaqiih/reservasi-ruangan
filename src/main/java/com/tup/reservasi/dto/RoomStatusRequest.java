@@ -1,5 +1,7 @@
 package com.tup.reservasi.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 /*
  * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
  *
@@ -13,7 +15,9 @@ package com.tup.reservasi.dto;
 
 public class RoomStatusRequest {
 
+    @NotBlank(message = "ID ruang tidak boleh kosong")
     private String roomId;
+
     private boolean statusAktif;
 
     public RoomStatusRequest() {

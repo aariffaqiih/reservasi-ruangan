@@ -16,6 +16,7 @@ import com.tup.reservasi.entity.Reservation;
 import com.tup.reservasi.service.ReservationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,7 +36,10 @@ public class ReservationRestController {
     // ---------------------------------------------------------------------
     // CREATE – buat reservasi baru
     @PostMapping
-    public ResponseEntity<ReservationResponse> createReservation(@RequestBody ReservationRequest request) {
+    public ResponseEntity<ReservationResponse> createReservation(@RequestBody ReservationRequest request, Authentication authentication) {
+        if (request.getMahasiswaId() == null || request.getMahasiswaId().isBlank()) {
+            request.setMahasiswaId(authentication.getName());
+        }
         Reservation reservation = reservationService.createReservation(request);
         return new ResponseEntity<>(ReservationResponse.from(reservation), HttpStatus.CREATED);
     }
@@ -58,6 +62,15 @@ public class ReservationRestController {
     @PostMapping("/cancel")
     public ResponseEntity<Void> cancelReservation(@RequestBody ReservationCancelRequest request) {
         reservationService.cancelReservation(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{reservationId}/cancel")
+    public ResponseEntity<Void> cancelReservation(@PathVariable String reservationId,
+                                                  @RequestBody(required = false) ReservationCancelRequest request) {
+        ReservationCancelRequest effectiveRequest = request == null ? new ReservationCancelRequest() : request;
+        effectiveRequest.setReservationId(reservationId);
+        reservationService.cancelReservation(effectiveRequest);
         return ResponseEntity.ok().build();
     }
 

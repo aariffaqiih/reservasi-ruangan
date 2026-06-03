@@ -8,3 +8,12 @@ package com.tup.reservasi.entity;
  * - Behaviour yang perlu dibuat:
  *   receiveNotification(): void
  */
+
+public interface Notifiable {
+
+    void receiveNotification(String pesan);
+
+    default void receiveNotification() {
+        receiveNotification(null);
+    }
+}

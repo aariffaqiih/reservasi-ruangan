@@ -1,53 +1,13 @@
-<!DOCTYPE html>
-<html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Login</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}" />
-  </head>
-  <body>
-    <!--
-        Penanggung jawab: Amelia Sofiana Makharomi.
+<!--
+    Penanggung jawab: Amelia Sofiana Makharomi.
 
-        Arahan:
-        - Halaman ini hanya starter autentikasi awal.
-        - Behaviour yang berkaitan dengan class-diagram:
-          User.login(): boolean.
-          User.logout().
-        - Data final User di class-diagram adalah:
-          id, nama, email, noHp, passwordHash.
-        - Form starter saat ini memakai username/password agar tiga role awal
-          bisa login sebelum entity domain final dikerjakan.
-    -->
-    <h1>Login</h1>
-
-    <p th:if="${param.error}">Username atau password salah.</p>
-    <p th:if="${param.logout}">Berhasil logout.</p>
-
-    <form th:action="@{/login}" method="post">
-      <input
-        type="hidden"
-        th:name="${_csrf.parameterName}"
-        th:value="${_csrf.token}"
-      />
-
-      <label for="username">Username</label>
-      <input
-        id="username"
-        name="username"
-        type="text"
-        autocomplete="username"
-      />
-
-      <label for="password">Password</label>
-      <input
-        id="password"
-        name="password"
-        type="password"
-        autocomplete="current-password"
-      />
-
-      <button type="submit">Masuk</button>
-    </form>
-  </body>
-</html>
+    Arahan:
+    - Halaman ini hanya starter autentikasi awal.
+    - Behaviour yang berkaitan dengan class-diagram:
+      User.login(): boolean.
+      User.logout().
+    - Data final User di class-diagram adalah:
+      id, nama, email, noHp, passwordHash.
+    - Form starter saat ini memakai username/password agar tiga role awal
+      bisa login sebelum entity domain final dikerjakan.
+-->

@@ -66,6 +66,15 @@ public class ReservationService {
         if (request == null) {
             throw new ReservationException("Request tidak boleh kosong");
         }
+        if (request.getMahasiswaId() == null || request.getMahasiswaId().isBlank()) {
+            throw new ReservationException("ID mahasiswa tidak boleh kosong");
+        }
+        if (request.getRoomId() == null || request.getRoomId().isBlank()) {
+            throw new ReservationException("ID ruangan tidak boleh kosong");
+        }
+        if (request.getTujuan() == null || request.getTujuan().isBlank()) {
+            throw new ReservationException("Tujuan reservasi tidak boleh kosong");
+        }
 
         // 1. Cek User/Mahasiswa
         User user = userRepository.findById(request.getMahasiswaId())

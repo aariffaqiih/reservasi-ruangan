@@ -1,5 +1,15 @@
 package com.tup.reservasi.entity;
 
+import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+
 /*
  * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
  *
@@ -20,12 +30,27 @@ package com.tup.reservasi.entity;
  *   Setiap Reservation memakai tepat 1 Room.
  */
 
+@Entity
+@Table(name = "rooms")
 public class Room {
 
+    @Id
+    @Column(name = "room_id", nullable = false, length = 50)
     private String roomId;
+
+    @NotBlank(message = "Nama ruang tidak boleh kosong")
+    @Column(name = "nama_ruang", nullable = false, length = 100)
     private String namaRuang;
+
+    @NotBlank(message = "Gedung tidak boleh kosong")
+    @Column(nullable = false, length = 100)
     private String gedung;
+
+    @Min(value = 1, message = "Kapasitas minimal 1")
+    @Column(nullable = false)
     private int kapasitas;
+
+    @Column(name = "status_aktif", nullable = false)
     private boolean statusAktif;
 
     public Room() {
@@ -37,6 +62,13 @@ public class Room {
         this.gedung = gedung;
         this.kapasitas = kapasitas;
         this.statusAktif = statusAktif;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (roomId == null || roomId.isBlank()) {
+            roomId = UUID.randomUUID().toString();
+        }
     }
 
     public void aktifkan() {

@@ -28,8 +28,15 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
+				.csrf(csrf -> csrf
+						.ignoringRequestMatchers("/api/**"))
 				.authorizeHttpRequests(authorize -> authorize
 						.requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**").permitAll()
+						.requestMatchers("/api/users/register").permitAll()
+						.requestMatchers("/api/approvals/**").hasRole("ADMIN")
+						.requestMatchers("/api/rooms/**").hasRole("ADMIN")
+						.requestMatchers("/api/reservations/**").hasAnyRole("MAHASISWA", "ADMIN")
+						.requestMatchers("/api/users/**").hasAnyRole("MAHASISWA", "ADMIN")
 						.requestMatchers("/mahasiswa/**").hasRole("MAHASISWA")
 						.requestMatchers("/admin/**").hasRole("ADMIN")
 						.requestMatchers("/satpam/**").hasRole("SATPAM")

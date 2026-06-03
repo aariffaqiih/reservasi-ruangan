@@ -11,3 +11,24 @@ package com.tup.reservasi.enums;
  *   keputusan untuk mintaRevisi().
  * - Nilai enum harus sinkron dengan method Approval dan ApprovalService.
  */
+
+public enum ApprovalDecision {
+
+    APPROVED("Disetujui"),
+    REJECTED("Ditolak"),
+    REVISION_REQUESTED("Minta Revisi");
+
+    private final String label;
+
+    ApprovalDecision(String label) {
+        this.label = label;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public boolean requiresCatatan() {
+        return this == REJECTED || this == REVISION_REQUESTED;
+    }
+}

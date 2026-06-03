@@ -1,5 +1,10 @@
 package com.tup.reservasi.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 /*
  * Penanggung jawab: Amelia Sofiana Makharomi.
  *
@@ -19,23 +24,44 @@ package com.tup.reservasi.dto;
 
 public class RegistrationRequest {
 
+    @NotBlank(message = "Nama tidak boleh kosong")
+    @Size(max = 100, message = "Nama maksimal 100 karakter")
     private String nama;
+
+    @NotBlank(message = "Email tidak boleh kosong")
+    @Email(message = "Format email tidak valid")
+    @Size(max = 100, message = "Email maksimal 100 karakter")
     private String email;
+
+    @Size(max = 20, message = "Nomor HP maksimal 20 karakter")
     private String noHp;
+
+    @NotBlank(message = "Password tidak boleh kosong")
+    @Size(min = 3, max = 100, message = "Password harus 3-100 karakter")
     private String password;
 
+    @NotBlank(message = "Role tidak boleh kosong")
     private String role;
 
+    @Size(max = 30, message = "NIM maksimal 30 karakter")
     // Mahasiswa
     private String nim;
+
+    @Size(max = 100, message = "Prodi maksimal 100 karakter")
     private String prodi;
+
+    @Min(value = 2000, message = "Angkatan tidak valid")
     private Integer angkatan;
 
+    @Size(max = 100, message = "Unit kerja maksimal 100 karakter")
     // Admin
     private String unitKerja;
 
+    @Size(max = 50, message = "Shift maksimal 50 karakter")
     // Satpam
     private String shift;
+
+    @Size(max = 100, message = "Pos jaga maksimal 100 karakter")
     private String posJaga;
 
     public RegistrationRequest() {

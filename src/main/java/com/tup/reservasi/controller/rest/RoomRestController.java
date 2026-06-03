@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/rooms")
 public class RoomRestController {
@@ -34,7 +36,7 @@ public class RoomRestController {
     // ---------------------------------------------------------------------
     // CREATE
     @PostMapping
-    public ResponseEntity<RoomResponse> createRoom(@RequestBody RoomRequest request) {
+    public ResponseEntity<RoomResponse> createRoom(@Valid @RequestBody RoomRequest request) {
         Room room = toEntity(request);
         Room saved = roomService.createRoom(room);
         return new ResponseEntity<>(toResponse(saved), HttpStatus.CREATED);
@@ -63,7 +65,7 @@ public class RoomRestController {
     // UPDATE – full replacement
     @PutMapping("/{roomId}")
     public ResponseEntity<RoomResponse> updateRoom(@PathVariable String roomId,
-                                                   @RequestBody RoomRequest request) {
+                                                   @Valid @RequestBody RoomRequest request) {
         // Ensure the entity has the correct ID
         Room updated = toEntity(request);
         updated.setRoomId(roomId);

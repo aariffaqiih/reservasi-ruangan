@@ -6,6 +6,9 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import com.tup.reservasi.entity.Mahasiswa;
+import com.tup.reservasi.repository.UserRepository;
+
 /*
  * Penanggung jawab: Amelia Sofiana Makharomi.
  *
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class StarterUserSeeder implements ApplicationRunner {
 
     private final LoginUserRepository loginUserRepository;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final boolean enabled;
     private final String mahasiswaUsername;
@@ -30,6 +34,7 @@ public class StarterUserSeeder implements ApplicationRunner {
 
     public StarterUserSeeder(
             LoginUserRepository loginUserRepository,
+            UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.starter-users.enabled}") boolean enabled,
             @Value("${app.starter-users.mahasiswa.username}") String mahasiswaUsername,
@@ -39,6 +44,7 @@ public class StarterUserSeeder implements ApplicationRunner {
             @Value("${app.starter-users.satpam.username}") String satpamUsername,
             @Value("${app.starter-users.satpam.password}") String satpamPassword) {
         this.loginUserRepository = loginUserRepository;
+        this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.enabled = enabled;
         this.mahasiswaUsername = mahasiswaUsername;
@@ -58,11 +64,26 @@ public class StarterUserSeeder implements ApplicationRunner {
         createIfMissing(mahasiswaUsername, mahasiswaPassword, UserRole.MAHASISWA);
         createIfMissing(adminUsername, adminPassword, UserRole.ADMIN);
         createIfMissing(satpamUsername, satpamPassword, UserRole.SATPAM);
+        createMahasiswaDomainIfMissing();
     }
 
     private void createIfMissing(String username, String password, UserRole role) {
         if (loginUserRepository.findByUsername(username).isEmpty()) {
             loginUserRepository.save(new LoginUser(username, passwordEncoder.encode(password), role));
+        }
+    }
+    private void createMahasiswaDomainIfMissing() {
+        if (userRepository.findById(mahasiswaUsername).isEmpty()) {
+            Mahasiswa mahasiswa = new Mahasiswa(
+                    mahasiswaUsername,
+                    "Mahasiswa Starter",
+                    "mhs@starter.local",
+                    "080000000001",
+                    passwordEncoder.encode(mahasiswaPassword),
+                    mahasiswaUsername,
+                    "Teknik Informatika",
+                    2026);
+            userRepository.save(mahasiswa);
         }
     }
 }

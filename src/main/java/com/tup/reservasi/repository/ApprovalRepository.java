@@ -12,3 +12,24 @@ package com.tup.reservasi.repository;
  *   daftar approval berdasarkan Admin.
  *   daftar approval berdasarkan keputusan.
  */
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.tup.reservasi.entity.Approval;
+import com.tup.reservasi.enums.ApprovalDecision;
+
+public interface ApprovalRepository extends JpaRepository<Approval, String> {
+
+    List<Approval> findByReservationId(String reservationId);
+
+    Optional<Approval> findFirstByReservationIdOrderByReviewedAtDesc(String reservationId);
+
+    List<Approval> findByAdminId(String adminId);
+
+    List<Approval> findByKeputusan(ApprovalDecision keputusan);
+
+    List<Approval> findAllByOrderByReviewedAtDesc();
+}
