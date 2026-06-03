@@ -3,15 +3,106 @@ package com.tup.reservasi.service;
 /*
  * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
  *
- * Arahan dari class-diagram:
- * - Service ini membantu behaviour Room:
- *   aktifkan()
- *   nonaktifkan()
- *   ubahStatusAktif()
- *   getInfoRuang(): String
- * - Data yang terkait:
- *   roomId, namaRuang, gedung, kapasitas, statusAktif.
- * - Aturan yang perlu dipikirkan saat coding:
- *   Room nonaktif tidak boleh dipakai untuk Reservation baru.
- *   perubahan status aktif perlu dicek terhadap reservasi yang sedang berjalan.
+ * Service ini mengelola entitas Room. Semua logika bisnis
+ * (validasi, perubahan status, dll) berada di sini, sehingga
+ * controller tetap tipis dan hanya berurusan dengan HTTP.
  */
+
+import com.tup.reservasi.entity.Room;
+import com.tup.reservasi.repository.RoomRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class RoomService {
+
+    private final RoomRepository roomRepository;
+
+    public RoomService(RoomRepository roomRepository) {
+        this.roomRepository = roomRepository;
+    }
+
+    /* ------------------------------------------------------------------ */
+    // CREATE
+    @Transactional
+    public Room createRoom(Room room) {
+        // Simple creation; additional validation can be added later.
+        return roomRepository.save(room);
+    }
+
+    /* ------------------------------------------------------------------ */
+    // READ
+    public Optional<Room> getRoomById(String roomId) {
+        return roomRepository.findById(roomId);
+    }
+
+    public List<Room> getAllRooms() {
+        return roomRepository.findAll();
+    }
+
+    public List<Room> getActiveRooms() {
+        return roomRepository.findByStatusAktif(true);
+    }
+
+    public List<Room> findByGedung(String gedung) {
+        return roomRepository.findByGedung(gedung);
+    }
+
+    public List<Room> findByKapasitasGreaterThanEqual(int kapasitas) {
+        return roomRepository.findByKapasitasGreaterThanEqual(kapasitas);
+    }
+
+    public List<Room> findByNamaRuang(String namaRuang) {
+        return roomRepository.findByNamaRuang(namaRuang);
+    }
+
+    /* ------------------------------------------------------------------ */
+    // UPDATE
+    @Transactional
+    public Room updateRoom(Room updatedRoom) {
+        Room existing = roomRepository.findById(updatedRoom.getRoomId())
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        existing.setNamaRuang(updatedRoom.getNamaRuang());
+        existing.setGedung(updatedRoom.getGedung());
+        existing.setKapasitas(updatedRoom.getKapasitas());
+        existing.setStatusAktif(updatedRoom.isStatusAktif());
+        return roomRepository.save(existing);
+    }
+
+    @Transactional
+    public void activateRoom(String roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        room.aktifkan();
+        roomRepository.save(room);
+    }
+
+    @Transactional
+    public void deactivateRoom(String roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        room.nonaktifkan();
+        roomRepository.save(room);
+    }
+
+    /* ------------------------------------------------------------------ */
+    // DELETE
+    @Transactional
+    public void deleteRoom(String roomId) {
+        if (!roomRepository.existsById(roomId)) {
+            throw new IllegalArgumentException("Room not found");
+        }
+        roomRepository.deleteById(roomId);
+    }
+
+    /* ------------------------------------------------------------------ */
+    // UTILITIES
+    public String getInfoRuang(String roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+        return room.getInfoRuang();
+    }
+}

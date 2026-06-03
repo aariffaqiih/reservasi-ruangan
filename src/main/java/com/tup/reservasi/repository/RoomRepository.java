@@ -12,3 +12,21 @@ package com.tup.reservasi.repository;
  *   cari ruangan berdasarkan gedung.
  *   cari ruangan berdasarkan kapasitas minimum.
  */
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.tup.reservasi.entity.Room;
+
+public interface RoomRepository extends JpaRepository<Room, String> {
+
+    List<Room> findByStatusAktif(boolean statusAktif);
+
+    List<Room> findByGedung(String gedung);
+
+    List<Room> findByKapasitasGreaterThanEqual(int kapasitas);
+
+    List<Room> findByNamaRuang(String namaRuang);
+
+}
