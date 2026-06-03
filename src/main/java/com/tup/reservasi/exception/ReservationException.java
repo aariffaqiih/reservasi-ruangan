@@ -13,3 +13,14 @@ package com.tup.reservasi.exception;
  *   approval tidak valid untuk status saat ini.
  * - File ini tetap komentar sampai implementasi fitur dimulai.
  */
+
+public class ReservationException extends RuntimeException {
+    
+    public ReservationException(String message) {
+        super(message);
+    }
+
+    public ReservationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
