@@ -20,7 +20,6 @@ public class AccessIssueRequest {
     @NotBlank(message = "ID reservasi tidak boleh kosong")
     private String reservationId;
 
-    @NotBlank(message = "ID satpam tidak boleh kosong")
     private String satpamId;
 
     @NotBlank(message = "Catatan pelanggaran tidak boleh kosong")
