@@ -1,14 +1,20 @@
 package com.tup.reservasi.repository;
 
-/*
- * Penanggung jawab: Ajda Mutiara Zahra.
- *
- * Arahan repository:
- * - Siapkan akses data untuk Notification.
- * - Field pencarian utama:
- *   notificationId, penerima, pesan, statusBaca, createdAt.
- * - Query yang kemungkinan dibutuhkan:
- *   daftar notifikasi per penerima.
- *   daftar notifikasi belum dibaca.
- *   urutkan notifikasi berdasarkan createdAt terbaru.
- */
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import com.tup.reservasi.entity.Notification;
+
+@Repository
+public interface NotificationRepository extends JpaRepository<Notification, String> {
+
+    List<Notification> findByPenerimaId(String penerimaId);
+
+    List<Notification> findByPenerimaIdOrderByCreatedAtDesc(String penerimaId);
+
+    List<Notification> findByPenerimaIdAndStatusBaca(String penerimaId, boolean statusBaca);
+
+    List<Notification> findByPenerimaIdAndStatusBacaOrderByCreatedAtDesc(String penerimaId, boolean statusBaca);
+
+    List<Notification> findByStatusBaca(boolean statusBaca);
+}
