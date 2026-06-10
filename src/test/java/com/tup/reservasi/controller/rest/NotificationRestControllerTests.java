@@ -19,7 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.tup.reservasi.dto.NotificationRequest;
 import com.tup.reservasi.entity.Mahasiswa;
 import com.tup.reservasi.entity.Notification;
