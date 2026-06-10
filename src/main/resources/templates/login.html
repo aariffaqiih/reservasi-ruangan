@@ -1,13 +1,55 @@
-<!--
-    Penanggung jawab: Amelia Sofiana Makharomi.
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Peminjaman Ruang Kelas</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <main class="login-page">
+        <section class="login-card">
+            <div class="login-hero">
+                <div class="brand">
+                    <span class="brand-icon">□</span>
+                    <span>Peminjaman<br>Ruang Kelas</span>
+                </div>
+                <h1>Kelola peminjaman ruang kelas dengan mudah.</h1>
+                <p class="muted">Masuk sebagai mahasiswa, admin, atau satpam untuk mengakses menu sesuai role.</p>
+                <br>
+                <table>
+                    <thead>
+                        <tr><th>Role</th><th>Username</th><th>Password</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Mahasiswa</td><td>mhs</td><td>mhs</td></tr>
+                        <tr><td>Admin</td><td>adm</td><td>adm</td></tr>
+                        <tr><td>Satpam</td><td>stm</td><td>stm</td></tr>
+                    </tbody>
+                </table>
+            </div>
 
-    Arahan:
-    - Halaman ini hanya starter autentikasi awal.
-    - Behaviour yang berkaitan dengan class-diagram:
-      User.login(): boolean.
-      User.logout().
-    - Data final User di class-diagram adalah:
-      id, nama, email, noHp, passwordHash.
-    - Form starter saat ini memakai username/password agar tiga role awal
-      bisa login sebelum entity domain final dikerjakan.
--->
+            <div class="login-form">
+                <span class="eyebrow">Masuk</span>
+                <h2>Selamat Datang</h2>
+                <p th:if="${param.error}" class="badge red">Username atau password salah.</p>
+                <p th:if="${param.logout}" class="badge green">Anda sudah logout.</p>
+
+                <form th:action="@{/login}" method="post">
+                    <div>
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <br>
+                    <div>
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <br>
+                    <button type="submit">Masuk</button>
+                </form>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

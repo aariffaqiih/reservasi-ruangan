@@ -1,21 +1,81 @@
-<!--
-    Penanggung jawab: 'Aarif Rahmaan Jalaluddin Faqiih.
-
-    Arahan dari class-diagram:
-    - Template approval nanti menampilkan:
-      approvalId: String
-      reservation: Reservation
-      admin: Admin
-      keputusan: ApprovalDecision
-      catatan: String
-      reviewedAt: LocalDateTime
-    - Behaviour UI:
-      verifyReservation()
-      approveReservation()
-      rejectReservation()
-      requestRevision()
-      setujui()
-      tolak()
-      mintaRevisi()
-    - Perubahan keputusan harus sinkron dengan status Reservation.
--->
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approval Reservasi</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
+            <nav class="nav-menu">
+                <a class="nav-item" th:href="@{/admin/dashboard}">Dashboard</a>
+                <a class="nav-item active" th:href="@{/admin/approvals}">Approval</a>
+                <a class="nav-item" th:href="@{/api/rooms}">Ruang Kelas</a>
+            </nav>
+            <div class="sidebar-footer">
+                <form th:action="@{/logout}" method="post"><button class="secondary" type="submit">Logout</button></form>
+            </div>
+        </aside>
+        <main class="page">
+            <div class="page-inner">
+                <div class="page-title">
+                    <span class="eyebrow">Approval</span>
+                    <h1>Reservasi Pending</h1>
+                    <p>Setujui, tolak, atau minta revisi data peminjaman.</p>
+                </div>
+                <br>
+                <section class="card">
+                    <table>
+                        <thead>
+                            <tr><th>ID</th><th>Mahasiswa</th><th>Ruangan</th><th>Tanggal</th><th>Jam</th><th>Tujuan</th><th>Status</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="reservation : ${pendingReservations}">
+                                <td th:text="${reservation.reservationId}">RES-001</td>
+                                <td th:text="${reservation.mahasiswaId}">mhs</td>
+                                <td th:text="${reservation.roomId}">ROOM-001</td>
+                                <td th:text="${reservation.tanggal}">2026-06-15</td>
+                                <td><span th:text="${reservation.jamMulai}">09:00</span> - <span th:text="${reservation.jamSelesai}">11:00</span></td>
+                                <td th:text="${reservation.tujuan}">Rapat</td>
+                                <td><span class="badge orange" th:text="${reservation.status}">PENDING</span></td>
+                                <td>
+                                    <form th:action="@{/admin/approvals/{id}/approve(id=${reservation.reservationId})}" method="post">
+                                        <input type="text" name="catatan" placeholder="Catatan">
+                                        <button type="submit">Setujui</button>
+                                    </form>
+                                    <br>
+                                    <form th:action="@{/admin/approvals/{id}/reject(id=${reservation.reservationId})}" method="post">
+                                        <input type="text" name="catatan" placeholder="Alasan ditolak">
+                                        <button type="submit">Tolak</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(pendingReservations)}"><td colspan="8">Belum ada reservasi pending.</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+                <section class="card" style="margin-top:18px">
+                    <div class="section-title"><h2>Riwayat Approval</h2></div>
+                    <table>
+                        <thead><tr><th>ID Approval</th><th>ID Reservasi</th><th>Admin</th><th>Keputusan</th><th>Catatan</th><th>Waktu</th></tr></thead>
+                        <tbody>
+                            <tr th:each="approval : ${approvals}">
+                                <td th:text="${approval.approvalId}">APR-001</td>
+                                <td th:text="${approval.reservationId}">RES-001</td>
+                                <td th:text="${approval.adminId}">adm</td>
+                                <td><span class="badge green" th:text="${approval.keputusan}">APPROVED</span></td>
+                                <td th:text="${approval.catatan}">Disetujui</td>
+                                <td th:text="${approval.reviewedAt}">2026-06-15T08:00</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(approvals)}"><td colspan="6">Belum ada riwayat approval.</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,21 +1,43 @@
-<!--
-    Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
-
-    Arahan dari class-diagram:
-    - Form pengajuan Reservation nanti membutuhkan:
-      mahasiswaId: String
-      roomId: String
-      tanggal: LocalDate
-      jamMulai: LocalTime
-      jamSelesai: LocalTime
-      tujuan: String
-    - Behaviour UI:
-      ajukanReservasi()
-      validasiWaktu()
-      validateAvailability()
-      createReservation()
-    - Validasi yang perlu ditampilkan:
-      jam mulai harus sebelum jam selesai.
-      ruangan harus aktif.
-      jadwal tidak boleh bentrok.
--->
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peminjaman Baru</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
+            <nav class="nav-menu">
+                <a class="nav-item" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
+                <a class="nav-item active" th:href="@{/api/reservations}">Peminjaman</a>
+                <a class="nav-item" th:href="@{/api/rooms}">Ruang Kelas</a>
+            </nav>
+        </aside>
+        <main class="page">
+            <div class="page-inner">
+                <div class="page-title"><span class="eyebrow">3. Peminjaman</span><h1>Peminjaman Baru</h1><p>Ajukan peminjaman ruang kelas.</p></div>
+                <div class="tabs"><span class="tab active">1 Informasi Kegiatan</span><span class="tab">2 Pilih Ruang</span><span class="tab">3 Konfirmasi</span></div>
+                <section class="card">
+                    <form action="/api/reservations" method="post">
+                        <div class="form-grid">
+                            <div class="full"><label for="tujuan">Nama Kegiatan</label><input type="text" id="tujuan" name="tujuan" value="Rapat Divisi PSDM" required></div>
+                            <div><label for="tanggal">Tanggal</label><input type="date" id="tanggal" name="tanggal" required></div>
+                            <div><label for="mahasiswaId">ID Mahasiswa</label><input type="text" id="mahasiswaId" name="mahasiswaId" value="mhs" required></div>
+                            <div><label for="jamMulai">Jam Mulai</label><input type="time" id="jamMulai" name="jamMulai" required></div>
+                            <div><label for="jamSelesai">Jam Selesai</label><input type="time" id="jamSelesai" name="jamSelesai" required></div>
+                            <div><label for="roomId">ID Ruangan</label><input type="text" id="roomId" name="roomId" placeholder="ROOM-001" required></div>
+                            <div><label for="jenis">Jenis Kegiatan</label><select id="jenis" name="jenis"><option>Rapat</option><option>Diskusi</option><option>Presentasi</option></select></div>
+                            <div class="full"><label for="deskripsi">Deskripsi / Keterangan</label><textarea id="deskripsi" name="deskripsi">Rapat evaluasi program kerja bulanan.</textarea></div>
+                        </div>
+                        <p class="muted">Catatan: backend REST menerima JSON. Form ini kerangka UI yang sesuai field backend.</p>
+                        <div class="form-actions"><button type="submit">Selanjutnya</button></div>
+                    </form>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

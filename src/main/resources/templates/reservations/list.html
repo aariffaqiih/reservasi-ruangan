@@ -1,23 +1,45 @@
-<!--
-    Penanggung jawab: 'Aarif Rahmaan Jalaluddin Faqiih dan Ali Abdul Fattah 'Alim Kautsar.
-
-    Arahan dari class-diagram:
-    - Template daftar Reservation nanti menampilkan:
-      reservationId: String
-      mahasiswa: Mahasiswa
-      room: Room
-      tanggal: LocalDate
-      jamMulai: LocalTime
-      jamSelesai: LocalTime
-      tujuan: String
-      status: ReservationStatus
-      createdAt: LocalDateTime
-      cancelledAt: LocalDateTime
-      approval: Approval
-      accessRecord: AccessRecord
-    - Behaviour UI:
-      lihatStatusReservasi()
-      batalkanReservasi()
-      getReservationHistory()
-    - Tombol batalkan hanya muncul jika isCanBeCancelled() bernilai benar.
--->
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Peminjaman</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
+            <nav class="nav-menu">
+                <a class="nav-item" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
+                <a class="nav-item active" th:href="@{/api/reservations/history}">Riwayat</a>
+                <a class="nav-item" th:href="@{/api/notifications}">Notifikasi</a>
+            </nav>
+        </aside>
+        <main class="page">
+            <div class="page-inner">
+                <div class="page-title"><span class="eyebrow">6. Riwayat Peminjaman</span><h1>Riwayat Peminjaman</h1><p>Riwayat semua peminjaman ruang kelas Anda.</p></div>
+                <br>
+                <section class="card">
+                    <input class="search" type="search" placeholder="Cari kegiatan...">
+                    <div class="tabs"><span class="tab active">Semua</span><span class="tab">Disetujui</span><span class="tab">Menunggu</span><span class="tab">Ditolak</span><span class="tab">Selesai</span></div>
+                    <table>
+                        <thead><tr><th>ID</th><th>Kegiatan</th><th>Ruang</th><th>Tanggal</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr th:each="reservation : ${reservations}">
+                                <td th:text="${reservation.reservationId}">PMJ-0001</td>
+                                <td th:text="${reservation.tujuan}">Rapat Himpunan</td>
+                                <td th:text="${reservation.roomId}">REK-201</td>
+                                <td th:text="${reservation.tanggal}">15 Mei 2025</td>
+                                <td><span class="badge green" th:text="${reservation.status}">Disetujui</span></td>
+                            </tr>
+                            <tr th:if="${reservations == null or #lists.isEmpty(reservations)}"><td>PMJ-0001</td><td>Rapat Himpunan</td><td>REK-201</td><td>15 Mei 2025</td><td><span class="badge green">Disetujui</span></td></tr>
+                            <tr th:if="${reservations == null or #lists.isEmpty(reservations)}"><td>PMJ-0002</td><td>Diskusi Kelompok</td><td>DC-306</td><td>15 Mei 2025</td><td><span class="badge orange">Menunggu</span></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

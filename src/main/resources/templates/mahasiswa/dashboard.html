@@ -1,20 +1,95 @@
-<!--
-    Penanggung jawab: Amelia Sofiana Makharomi.
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Mahasiswa</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-icon">□</span>
+                <span>Peminjaman<br>Ruang Kelas</span>
+            </div>
+            <nav class="nav-menu">
+                <a class="nav-item active" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
+                <a class="nav-item" th:href="@{/api/reservations/history}">Jadwal Saya</a>
+                <a class="nav-item" th:href="@{/api/reservations}">Peminjaman</a>
+                <a class="nav-item" th:href="@{/api/rooms}">Ruang Kelas</a>
+                <a class="nav-item" th:href="@{/api/notifications}">Notifikasi</a>
+                <a class="nav-item" th:href="@{/api/users/profile}">Pengaturan</a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="profile-mini">
+                    <div class="avatar">AP</div>
+                    <strong>Aisyah Putri</strong>
+                    <p class="muted">Mahasiswa</p>
+                </div>
+                <div class="help-box">
+                    <strong>Butuh bantuan?</strong>
+                    <p class="muted">Lihat panduan atau hubungi admin.</p>
+                    <a class="badge pink" href="#">Bantuan</a>
+                </div>
+                <form th:action="@{/logout}" method="post">
+                    <button class="secondary" type="submit">Logout</button>
+                </form>
+            </div>
+        </aside>
 
-    Arahan dari class-diagram:
-    - Halaman ini nanti menampilkan data Mahasiswa:
-      nim: String
-      prodi: String
-      angkatan: int
-    - Behaviour yang perlu disediakan lewat UI:
-      ajukanReservasi()
-      batalkanReservasi()
-      lihatStatusReservasi()
-      receiveNotification()
-    - Data pendukung yang nanti ditampilkan:
-      daftar Reservation milik Mahasiswa.
-      status setiap Reservation.
-      daftar Notification bila fitur notifikasi sudah aktif.
-    - Saat ini jangan isi fitur dulu; halaman tetap starter role.
--->
-ini halaman mahasiswa
+        <main class="page">
+            <div class="page-inner">
+                <div class="topbar">
+                    <div class="page-title">
+                        <span class="eyebrow">1. Dashboard</span>
+                        <h1>Halo, Aisyah!</h1>
+                        <p>Kelola peminjaman ruang kelas dengan mudah.</p>
+                    </div>
+                    <input class="search" type="search" placeholder="Cari ruang kelas...">
+                </div>
+
+                <section class="stats-grid">
+                    <article class="stat-card"><div class="stat-icon tone-pink">▣</div><div class="stat-number">3</div><strong>Peminjaman Aktif</strong><p class="muted">Lihat jadwal aktif</p></article>
+                    <article class="stat-card"><div class="stat-icon tone-green">✓</div><div class="stat-number">1</div><strong>Disetujui</strong><p class="muted">Peminjaman disetujui</p></article>
+                    <article class="stat-card"><div class="stat-icon tone-orange">◷</div><div class="stat-number">2</div><strong>Menunggu</strong><p class="muted">Sedang diproses</p></article>
+                    <article class="stat-card"><div class="stat-icon tone-red">×</div><div class="stat-number">0</div><strong>Ditolak</strong><p class="muted">Peminjaman ditolak</p></article>
+                </section>
+
+                <section class="content-grid">
+                    <div class="card">
+                        <div class="section-title"><h2>Kalender</h2><span>Mei 2025</span></div>
+                        <div class="calendar-grid">
+                            <strong>Min</strong><strong>Sen</strong><strong>Sel</strong><strong>Rab</strong><strong>Kam</strong><strong>Jum</strong><strong>Sab</strong>
+                            <span>27</span><span>28</span><span>29</span><span>30</span><span>1</span><span>2</span><span>3</span>
+                            <span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                            <span>11</span><span>12</span><span>13</span><span>14</span><span class="today">15</span><span>16</span><span>17</span>
+                            <span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span>
+                            <span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span><span>31</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="section-title"><h2>Jadwal Hari Ini</h2><span class="muted">Kamis, 15 Mei 2025</span></div>
+                        <div class="schedule-list">
+                            <article class="schedule-item"><span class="badge green">09.00</span><div><strong>Rapat Himpunan</strong><p class="muted">REK-201</p></div><span class="badge green">Disetujui</span></article>
+                            <article class="schedule-item"><span class="badge red">13.00</span><div><strong>Diskusi Kelompok</strong><p class="muted">DC-306</p></div><span class="badge orange">Menunggu</span></article>
+                            <article class="schedule-item"><span class="badge green">16.00</span><div><strong>Presentasi Proyek</strong><p class="muted">DSP-501</p></div><span class="badge green">Disetujui</span></article>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card" style="margin-top:18px">
+                    <div class="section-title"><h2>Daftar Ruang Kelas</h2><a class="badge pink" th:href="@{/api/rooms}">Lihat semua</a></div>
+                    <div class="room-grid">
+                        <article class="card"><div class="room-image"></div><strong>REK-201</strong><p class="muted">Kapasitas 40 orang</p><span class="badge green">Tersedia</span></article>
+                        <article class="card"><div class="room-image"></div><strong>DC-306</strong><p class="muted">Kapasitas 35 orang</p><span class="badge green">Tersedia</span></article>
+                        <article class="card"><div class="room-image"></div><strong>HOT-101</strong><p class="muted">Kapasitas 30 orang</p><span class="badge green">Tersedia</span></article>
+                        <article class="card"><div class="room-image"></div><strong>DSP-501</strong><p class="muted">Kapasitas 60 orang</p><span class="badge green">Tersedia</span></article>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

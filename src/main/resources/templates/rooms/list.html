@@ -1,19 +1,47 @@
-<!--
-    Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
-
-    Arahan dari class-diagram:
-    - Template daftar ruangan nanti menampilkan Room:
-      roomId: String
-      namaRuang: String
-      gedung: String
-      kapasitas: int
-      statusAktif: boolean
-    - Behaviour UI:
-      aktifkan()
-      nonaktifkan()
-      ubahStatusAktif()
-      getInfoRuang()
-    - Hubungan dengan Reservation:
-      satu Room dapat memiliki 0..* Reservation.
-      Room nonaktif tidak boleh dipakai untuk pengajuan reservasi baru.
--->
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruang Kelas</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
+            <nav class="nav-menu">
+                <a class="nav-item" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
+                <a class="nav-item" th:href="@{/api/reservations}">Peminjaman</a>
+                <a class="nav-item active" th:href="@{/api/rooms}">Ruang Kelas</a>
+            </nav>
+        </aside>
+        <main class="page">
+            <div class="page-inner">
+                <div class="topbar">
+                    <div class="page-title"><span class="eyebrow">4. Ruang Kelas</span><h1>Ruang Kelas</h1><p>Pilih ruang kelas yang tersedia untuk kegiatan Anda.</p></div>
+                    <input class="search" type="search" placeholder="Cari kode ruang...">
+                </div>
+                <section class="card">
+                    <div class="tabs"><span class="tab active">Semua Gedung</span><span class="tab">REK</span><span class="tab">DC</span><span class="tab">HOT</span><span class="tab">DSP</span></div>
+                    <table>
+                        <thead><tr><th>Kode</th><th>Gedung</th><th>Kapasitas</th><th>Fasilitas</th><th>Status</th><th>Detail</th></tr></thead>
+                        <tbody>
+                            <tr th:each="room : ${rooms}">
+                                <td th:text="${room.roomId}">REK-201</td>
+                                <td th:text="${room.gedung}">REK</td>
+                                <td th:text="${room.kapasitas}">40</td>
+                                <td th:text="${room.infoRuang}">LCD, AC, Whiteboard</td>
+                                <td><span class="badge green" th:text="${room.statusAktif}">Tersedia</span></td>
+                                <td><a class="badge pink" href="#">Detail</a></td>
+                            </tr>
+                            <tr th:if="${rooms == null or #lists.isEmpty(rooms)}"><td>REK-201</td><td>REK</td><td>40</td><td>LCD, AC, Whiteboard</td><td><span class="badge green">Tersedia</span></td><td><a class="badge pink" href="#">Detail</a></td></tr>
+                            <tr th:if="${rooms == null or #lists.isEmpty(rooms)}"><td>DC-306</td><td>DC</td><td>35</td><td>LCD, AC, Proyektor</td><td><span class="badge green">Tersedia</span></td><td><a class="badge pink" href="#">Detail</a></td></tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

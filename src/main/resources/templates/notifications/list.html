@@ -1,17 +1,39 @@
-<!--
-    Penanggung jawab: Ajda Mutiara Zahra.
-
-    Arahan dari class-diagram:
-    - Template notifikasi nanti menampilkan Notification:
-      notificationId: String
-      penerima: Notifiable
-      pesan: String
-      statusBaca: boolean
-      createdAt: LocalDateTime
-    - Behaviour UI:
-      kirim()
-      tandaiDibaca()
-      sendNotification()
-      sendStatusUpdate()
-    - Notifikasi status reservasi dikirim saat Reservation atau Approval berubah.
--->
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifikasi</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
+            <nav class="nav-menu">
+                <a class="nav-item" th:href="@{/dashboard}">Dashboard</a>
+                <a class="nav-item active" th:href="@{/api/notifications}">Notifikasi</a>
+                <a class="nav-item" th:href="@{/api/users/profile}">Pengaturan</a>
+            </nav>
+        </aside>
+        <main class="page">
+            <div class="page-inner">
+                <div class="topbar">
+                    <div class="page-title"><span class="eyebrow">7. Notifikasi</span><h1>Notifikasi</h1><p>Semua notifikasi terkait peminjaman ruang kelas.</p></div>
+                    <div class="stat-icon tone-red">3</div>
+                </div>
+                <section class="card notification-list">
+                    <article class="notification-item" th:each="notification : ${notifications}">
+                        <span class="status-dot tone-green">✓</span>
+                        <div><strong th:text="${notification.pesan}">Peminjaman REK-201 disetujui</strong><p class="muted" th:text="${notification.penerimaId}">mhs</p></div>
+                        <span class="muted" th:text="${notification.createdAt}">2 menit lalu</span>
+                    </article>
+                    <article class="notification-item" th:if="${notifications == null or #lists.isEmpty(notifications)}"><span class="status-dot tone-green">✓</span><div><strong>Peminjaman REK-201 disetujui</strong><p class="muted">Kegiatan: Rapat Himpunan</p></div><span class="muted">2 menit lalu</span></article>
+                    <article class="notification-item" th:if="${notifications == null or #lists.isEmpty(notifications)}"><span class="status-dot tone-orange">◷</span><div><strong>Peminjaman DC-306 sedang menunggu persetujuan</strong><p class="muted">Kegiatan: Diskusi Kelompok</p></div><span class="muted">10 menit lalu</span></article>
+                    <article class="notification-item" th:if="${notifications == null or #lists.isEmpty(notifications)}"><span class="status-dot tone-red">×</span><div><strong>Peminjaman DSP-506 ditolak</strong><p class="muted">Alasan: ruangan sudah digunakan</p></div><span class="muted">2 jam lalu</span></article>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

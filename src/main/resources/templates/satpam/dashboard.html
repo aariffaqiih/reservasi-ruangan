@@ -1,20 +1,43 @@
-<!--
-    Penanggung jawab: Tadzkiroh Aziziyah Haqia.
-
-    Arahan dari class-diagram:
-    - Halaman ini nanti menampilkan data Satpam:
-      shift: String
-      posJaga: String
-    - Behaviour yang perlu disediakan lewat UI:
-      konfirmasiCheckIn()
-      konfirmasiCheckOut()
-      catatKendala()
-      receiveNotification()
-    - Data pendukung yang nanti ditampilkan:
-      daftar Reservation yang sudah boleh akses ruangan.
-      daftar AccessRecord dengan checkInTime dan checkOutTime.
-      catatanPelanggaran bila ada kendala.
-      daftar Notification untuk Satpam.
-      - Saat ini jangan isi fitur dulu; halaman tetap starter role.
--->
-ini halaman satpam
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Satpam</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
+            <nav class="nav-menu">
+                <a class="nav-item active" th:href="@{/satpam/dashboard}">Dashboard</a>
+                <a class="nav-item" th:href="@{/satpam/akses}">Akses Ruangan</a>
+                <a class="nav-item" th:href="@{/api/access}">Riwayat Akses</a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="profile-mini"><div class="avatar">ST</div><strong>Satpam</strong><p class="muted">Pos Utama</p></div>
+                <form th:action="@{/logout}" method="post"><button class="secondary" type="submit">Logout</button></form>
+            </div>
+        </aside>
+        <main class="page">
+            <div class="page-inner">
+                <div class="topbar">
+                    <div class="page-title">
+                        <span class="eyebrow">Dashboard Satpam</span>
+                        <h1>Kontrol akses ruangan</h1>
+                        <p>Konfirmasi check-in, check-out, dan catat kendala.</p>
+                    </div>
+                    <a class="button" th:href="@{/satpam/akses}">Buka Akses</a>
+                </div>
+                <section class="stats-grid">
+                    <article class="stat-card"><div class="stat-icon tone-green">✓</div><div class="stat-number">4</div><strong>Check-in</strong><p class="muted">Hari ini</p></article>
+                    <article class="stat-card"><div class="stat-icon tone-orange">◷</div><div class="stat-number">2</div><strong>Belum Check-out</strong><p class="muted">Perlu dipantau</p></article>
+                    <article class="stat-card"><div class="stat-icon tone-red">!</div><div class="stat-number">1</div><strong>Kendala</strong><p class="muted">Dilaporkan</p></article>
+                    <article class="stat-card"><div class="stat-icon tone-pink">▣</div><div class="stat-number">6</div><strong>Record</strong><p class="muted">Total hari ini</p></article>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,17 +1,44 @@
-<!--
-    Penanggung jawab: Amelia Sofiana Makharomi.
-
-    Arahan dari class-diagram:
-    - Template profil nanti menampilkan data User:
-      id: String
-      nama: String
-      email: String
-      noHp: String
-    - Data khusus role:
-      Mahasiswa: nim, prodi, angkatan.
-      Admin: unitKerja.
-      Satpam: shift, posJaga.
-    - Behaviour UI:
-      ubahProfil().
-    - Jangan tampilkan passwordHash.
--->
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
+            <nav class="nav-menu">
+                <a class="nav-item" th:href="@{/dashboard}">Dashboard</a>
+                <a class="nav-item" th:href="@{/api/notifications}">Notifikasi</a>
+                <a class="nav-item active" th:href="@{/api/users/profile}">Pengaturan</a>
+            </nav>
+        </aside>
+        <main class="page">
+            <div class="page-inner">
+                <div class="page-title"><span class="eyebrow">8. Pengaturan</span><h1>Pengaturan</h1><p>Kelola akun dan preferensi Anda.</p></div>
+                <br>
+                <section class="card">
+                    <form action="/api/users/profile" method="post">
+                        <div class="form-grid">
+                            <div><div class="avatar" style="width:110px;height:110px;font-size:36px">AP</div><br><button class="secondary" type="button">Ubah Foto</button></div>
+                            <div>
+                                <label for="nama">Nama Lengkap</label><input type="text" id="nama" name="nama" value="Aisyah Putri">
+                                <br><br>
+                                <label for="nim">NIM</label><input type="text" id="nim" name="nim" value="2201234567">
+                                <br><br>
+                                <label for="email">Email</label><input type="email" id="email" name="email" value="aisyah@univ.ac.id">
+                                <br><br>
+                                <label for="noHp">No. Telepon</label><input type="text" id="noHp" name="noHp" value="0812-3456-7890">
+                            </div>
+                        </div>
+                        <div class="form-actions"><button type="submit">Simpan Perubahan</button></div>
+                    </form>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
