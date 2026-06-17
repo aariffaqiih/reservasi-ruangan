@@ -114,6 +114,17 @@ public class MahasiswaController {
         return "notifications/list";
     }
 
+    @PostMapping("/notifications/{id}/delete")
+    public String deleteNotification(@PathVariable Long id, RedirectAttributes redirectAttrs) {
+        try {
+            this.notificationService.deleteNotification(id);
+            redirectAttrs.addFlashAttribute("sukses", "Notifikasi berhasil dihapus");
+        } catch (RuntimeException e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/mahasiswa/notifications";
+    }
+
     @GetMapping("/profile/{id}")
     public String profile(@PathVariable Long id, Model model) {
         User user;

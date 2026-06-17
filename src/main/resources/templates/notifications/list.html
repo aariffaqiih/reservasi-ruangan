@@ -35,6 +35,9 @@
         </aside>
 
         <main class="app-main" id="main-content">
+            <div class="sukses" th:if="${sukses}" th:text="${sukses}">Pesan sukses</div>
+            <div class="error" th:if="${error}" th:text="${error}">Pesan error</div>
+
             <section class="page-hero" aria-labelledby="page-title">
                 <div class="page-title-card">
                     <span class="eyebrow">7. Notifikasi</span>
@@ -61,6 +64,7 @@
                                 <th>Pesan</th>
                                 <th>Status Baca</th>
                                 <th>Dibuat</th>
+                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -74,9 +78,14 @@
                                           th:text="${notification.statusBaca ? 'Dibaca' : 'Belum dibaca'}">Belum dibaca</span>
                                 </td>
                                 <td th:text="${notification.createdAt}">2026-06-12</td>
+                                <td>
+                                    <form th:action="@{/mahasiswa/notifications/{id}/delete(id=${notification.notificationId})}" method="post" onsubmit="return confirm('Apakah Anda yakin ingin menghapus notifikasi ini?');">
+                                        <button type="submit" class="danger">Hapus</button>
+                                    </form>
+                                </td>
                             </tr>
                             <tr th:if="${notifications == null or #lists.isEmpty(notifications)}">
-                                <td colspan="5">Belum ada notifikasi.</td>
+                                <td colspan="6">Belum ada notifikasi.</td>
                             </tr>
                         </tbody>
                     </table>
