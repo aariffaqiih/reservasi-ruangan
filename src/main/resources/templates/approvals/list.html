@@ -1,80 +1,145 @@
 <!DOCTYPE html>
+<!--
+    Penanggung jawab: Aarif Rahmaan Jalaluddin Faqiih - 103112430182.
+    Modul: Approval dan ApprovalService.
+-->
 <html lang="id" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
     <title>Approval Reservasi</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="app-shell">
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    <div class="app-frame">
         <aside class="sidebar">
-            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
-            <nav class="nav-menu">
-                <a class="nav-item" th:href="@{/admin/dashboard}">Dashboard</a>
-                <a class="nav-item active" th:href="@{/admin/approvals}">Approval</a>
-                <a class="nav-item" th:href="@{/api/rooms}">Ruang Kelas</a>
+            <a class="brand" th:href="@{/}">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span><span class="brand-name">Peminjaman Ruang Kelas</span><span class="brand-kicker">Panel Admin</span></span>
+            </a>
+            <nav aria-label="Navigasi utama">
+                <ul class="nav-list">
+                    <li><a class="nav-link" th:href="@{/admin/dashboard}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Dashboard</a></li>
+                    <li><a class="nav-link is-active" th:href="@{/admin/approvals}"><span class="nav-icon icon-approval" aria-hidden="true"></span>Approval</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/rooms}"><span class="nav-icon icon-room" aria-hidden="true"></span>Ruang Kelas</a></li>
+                    <li><a class="nav-link" th:href="@{/}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Beranda</a></li>
+                </ul>
             </nav>
-            <div class="sidebar-footer">
-                <form th:action="@{/logout}" method="post"><button class="secondary" type="submit">Logout</button></form>
+            <div class="sidebar-help">
+                <strong>Approval cepat</strong>
+                <p>Isi ID Admin dan catatan singkat sebelum memilih keputusan.</p>
             </div>
         </aside>
-        <main class="page">
-            <div class="page-inner">
-                <div class="page-title">
-                    <span class="eyebrow">Approval</span>
-                    <h1>Reservasi Pending</h1>
-                    <p>Setujui, tolak, atau minta revisi data peminjaman.</p>
+
+        <main class="app-main" id="main-content">
+            <div class="sukses" th:if="${sukses}" th:text="${sukses}">Pesan sukses</div>
+            <div class="error" th:if="${error}" th:text="${error}">Pesan error</div>
+
+            <section class="page-hero" aria-labelledby="page-title">
+                <div class="page-title-card">
+                    <span class="eyebrow">2. Approval</span>
+                    <h1 id="page-title">Approval Reservasi</h1>
+                    <p>Setujui, tolak, atau minta revisi reservasi yang sedang menunggu keputusan admin.</p>
                 </div>
-                <br>
-                <section class="card">
+            </section>
+
+            <div class="top-actions">
+                <a class="button secondary" th:href="@{/admin/dashboard}">Dashboard Admin</a>
+            </div>
+
+            <section class="table-card" aria-labelledby="pending-title">
+                <div class="table-card-header">
+                    <h2 id="pending-title">Reservasi Pending</h2>
+                    <span class="pill status-warning">Menunggu</span>
+                </div>
+                <div class="table-shell">
                     <table>
                         <thead>
-                            <tr><th>ID</th><th>Mahasiswa</th><th>Ruangan</th><th>Tanggal</th><th>Jam</th><th>Tujuan</th><th>Status</th><th>Aksi</th></tr>
+                            <tr>
+                                <th>ID</th>
+                                <th>Mahasiswa</th>
+                                <th>Ruang</th>
+                                <th>Tanggal</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
                         </thead>
                         <tbody>
                             <tr th:each="reservation : ${pendingReservations}">
-                                <td th:text="${reservation.reservationId}">RES-001</td>
-                                <td th:text="${reservation.mahasiswaId}">mhs</td>
-                                <td th:text="${reservation.roomId}">ROOM-001</td>
-                                <td th:text="${reservation.tanggal}">2026-06-15</td>
-                                <td><span th:text="${reservation.jamMulai}">09:00</span> - <span th:text="${reservation.jamSelesai}">11:00</span></td>
-                                <td th:text="${reservation.tujuan}">Rapat</td>
-                                <td><span class="badge orange" th:text="${reservation.status}">PENDING</span></td>
+                                <td th:text="${reservation.reservationId}">RES001</td>
+                                <td th:text="${reservation.mahasiswa == null ? '-' : reservation.mahasiswa.nama}">Mahasiswa</td>
+                                <td th:text="${reservation.room == null ? '-' : reservation.room.namaRuang}">Ruang</td>
+                                <td th:text="${reservation.tanggal}">2026-06-12</td>
+                                <td><span class="status-badge status-warning" th:text="${reservation.status}">PENDING</span></td>
                                 <td>
-                                    <form th:action="@{/admin/approvals/{id}/approve(id=${reservation.reservationId})}" method="post">
-                                        <input type="text" name="catatan" placeholder="Catatan">
-                                        <button type="submit">Setujui</button>
-                                    </form>
-                                    <br>
-                                    <form th:action="@{/admin/approvals/{id}/reject(id=${reservation.reservationId})}" method="post">
-                                        <input type="text" name="catatan" placeholder="Alasan ditolak">
-                                        <button type="submit">Tolak</button>
-                                    </form>
+                                    <div class="decision-stack">
+                                        <form class="inline-action" th:action="@{/admin/approvals/{id}/approve(id=${reservation.reservationId})}" method="post">
+                                            <label class="sr-only" th:for="|approveAdmin-${reservation.reservationId}|">ID Admin untuk setujui</label>
+                                            <input type="number" name="adminId" th:id="|approveAdmin-${reservation.reservationId}|" placeholder="ID Admin" required>
+                                            <label class="sr-only" th:for="|approveNote-${reservation.reservationId}|">Catatan setujui</label>
+                                            <input type="text" name="catatan" th:id="|approveNote-${reservation.reservationId}|" placeholder="Catatan">
+                                            <button type="submit">Setujui</button>
+                                        </form>
+                                        <form class="inline-action" th:action="@{/admin/approvals/{id}/reject(id=${reservation.reservationId})}" method="post">
+                                            <label class="sr-only" th:for="|rejectAdmin-${reservation.reservationId}|">ID Admin untuk tolak</label>
+                                            <input type="number" name="adminId" th:id="|rejectAdmin-${reservation.reservationId}|" placeholder="ID Admin" required>
+                                            <label class="sr-only" th:for="|rejectNote-${reservation.reservationId}|">Alasan penolakan</label>
+                                            <input type="text" name="catatan" th:id="|rejectNote-${reservation.reservationId}|" placeholder="Alasan">
+                                            <button class="danger" type="submit">Tolak</button>
+                                        </form>
+                                        <form class="inline-action" th:action="@{/admin/approvals/{id}/revision(id=${reservation.reservationId})}" method="post">
+                                            <label class="sr-only" th:for="|revisionAdmin-${reservation.reservationId}|">ID Admin untuk revisi</label>
+                                            <input type="number" name="adminId" th:id="|revisionAdmin-${reservation.reservationId}|" placeholder="ID Admin" required>
+                                            <label class="sr-only" th:for="|revisionNote-${reservation.reservationId}|">Catatan revisi</label>
+                                            <input type="text" name="catatan" th:id="|revisionNote-${reservation.reservationId}|" placeholder="Catatan revisi">
+                                            <button class="warning" type="submit">Revisi</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
-                            <tr th:if="${#lists.isEmpty(pendingReservations)}"><td colspan="8">Belum ada reservasi pending.</td></tr>
+                            <tr th:if="${pendingReservations == null or #lists.isEmpty(pendingReservations)}">
+                                <td colspan="6">Belum ada reservasi pending.</td>
+                            </tr>
                         </tbody>
                     </table>
-                </section>
-                <section class="card" style="margin-top:18px">
-                    <div class="section-title"><h2>Riwayat Approval</h2></div>
+                </div>
+            </section>
+
+            <section class="table-card" aria-labelledby="history-title">
+                <div class="table-card-header">
+                    <h2 id="history-title">Riwayat Approval</h2>
+                    <span class="pill">Audit</span>
+                </div>
+                <div class="table-shell">
                     <table>
-                        <thead><tr><th>ID Approval</th><th>ID Reservasi</th><th>Admin</th><th>Keputusan</th><th>Catatan</th><th>Waktu</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Reservasi</th>
+                                <th>Admin</th>
+                                <th>Keputusan</th>
+                                <th>Catatan</th>
+                                <th>Waktu Review</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <tr th:each="approval : ${approvals}">
-                                <td th:text="${approval.approvalId}">APR-001</td>
-                                <td th:text="${approval.reservationId}">RES-001</td>
-                                <td th:text="${approval.adminId}">adm</td>
-                                <td><span class="badge green" th:text="${approval.keputusan}">APPROVED</span></td>
-                                <td th:text="${approval.catatan}">Disetujui</td>
-                                <td th:text="${approval.reviewedAt}">2026-06-15T08:00</td>
+                                <td th:text="${approval.approvalId}">APR001</td>
+                                <td th:text="${approval.reservation == null ? '-' : approval.reservation.reservationId}">RES001</td>
+                                <td th:text="${approval.admin == null ? '-' : approval.admin.nama}">Admin</td>
+                                <td><span class="status-badge" th:text="${approval.keputusan}">SETUJUI</span></td>
+                                <td th:text="${approval.catatan}">Catatan</td>
+                                <td th:text="${approval.reviewedAt}">2026-06-12</td>
                             </tr>
-                            <tr th:if="${#lists.isEmpty(approvals)}"><td colspan="6">Belum ada riwayat approval.</td></tr>
+                            <tr th:if="${approvals == null or #lists.isEmpty(approvals)}">
+                                <td colspan="6">Belum ada riwayat approval.</td>
+                            </tr>
                         </tbody>
                     </table>
-                </section>
-            </div>
+                </div>
+            </section>
         </main>
     </div>
 </body>

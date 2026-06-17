@@ -1,0 +1,276 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------------< com.tup:reservasi >--------------------------
+[INFO] Building reservasi 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:4.0.6:run (default-cli) > test-compile @ reservasi >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ reservasi ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 12 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ reservasi ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ reservasi ---
+[INFO] skip non existing resourceDirectory D:\dosen sakit\reservasi\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ reservasi ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] <<< spring-boot:4.0.6:run (default-cli) < test-compile @ reservasi <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:4.0.6:run (default-cli) @ reservasi ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.6)
+
+2026-06-14T18:26:56.278+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.tup.reservasi.ReservasiApplication   : Starting ReservasiApplication using Java 21.0.10 with PID 15980 (D:\dosen sakit\reservasi\target\classes started by aarif in D:\dosen sakit\reservasi)
+2026-06-14T18:26:56.278+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.tup.reservasi.ReservasiApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-06-14T18:26:56.338+07:00  INFO 15980 --- [reservasi] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-06-14T18:26:56.338+07:00  INFO 15980 --- [reservasi] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-06-14T18:26:56.978+07:00  INFO 15980 --- [reservasi] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-06-14T18:26:57.059+07:00  INFO 15980 --- [reservasi] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 74 ms. Found 6 JPA repository interfaces.
+2026-06-14T18:26:57.519+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-06-14T18:26:57.535+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-06-14T18:26:57.535+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-06-14T18:26:57.575+07:00  INFO 15980 --- [reservasi] [  restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1237 ms
+2026-06-14T18:26:57.719+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-06-14T18:26:57.778+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-06-14T18:26:58.163+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-06-14T18:26:58.195+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-06-14T18:26:58.356+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@75fef6c
+2026-06-14T18:26:58.356+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-06-14T18:26:58.396+07:00  WARN 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.core                   : HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly.The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2026-06-14T18:26:58.400+07:00  WARN 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-06-14T18:26:58.413+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/reservasi_ruang?useSSL=false&serverTimezone=Asia/Jakarta]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 5.5.5
+	Default catalog/schema: reservasi_ruang/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-06-14T18:26:59.411+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-06-14T18:26:59.667+07:00  INFO 15980 --- [reservasi] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-06-14T18:26:59.739+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-06-14T18:27:00.553+07:00  WARN 15980 --- [reservasi] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-06-14T18:27:00.577+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.b.w.a.WelcomePageHandlerMapping      : Adding welcome page template: index
+2026-06-14T18:27:00.924+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-06-14T18:27:00.928+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.tup.reservasi.ReservasiApplication   : Started ReservasiApplication in 5.05 seconds (process running for 5.527)
+2026-06-14T18:27:04.251+07:00  INFO 15980 --- [reservasi] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-06-14T18:27:04.251+07:00  INFO 15980 --- [reservasi] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-06-14T18:27:04.251+07:00  INFO 15980 --- [reservasi] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+Hibernate: 
+    select
+        r1_0.reservation_id,
+        ar1_0.record_id,
+        ar1_0.catatan_pelanggaran,
+        ar1_0.check_in_time,
+        ar1_0.check_out_time,
+        s1_0.id,
+        s1_1.email,
+        s1_1.nama,
+        s1_1.no_hp,
+        s1_1.password_hash,
+        s1_0.pos_jaga,
+        s1_0.shift,
+        a1_0.approval_id,
+        a2_0.id,
+        a2_1.email,
+        a2_1.nama,
+        a2_1.no_hp,
+        a2_1.password_hash,
+        a2_0.unit_kerja,
+        a1_0.catatan,
+        a1_0.keputusan,
+        a1_0.reviewed_at,
+        r1_0.cancelled_at,
+        r1_0.created_at,
+        r1_0.jam_mulai,
+        r1_0.jam_selesai,
+        m1_0.id,
+        m1_1.email,
+        m1_1.nama,
+        m1_1.no_hp,
+        m1_1.password_hash,
+        m1_0.angkatan,
+        m1_0.nim,
+        m1_0.prodi,
+        r2_0.room_id,
+        r2_0.gedung,
+        r2_0.kapasitas,
+        r2_0.nama_ruang,
+        r2_0.status_aktif,
+        r1_0.status,
+        r1_0.tanggal,
+        r1_0.tujuan 
+    from
+        reservations r1_0 
+    left join
+        access_records ar1_0 
+            on r1_0.reservation_id=ar1_0.reservation_id 
+    left join
+        satpam s1_0 
+            on s1_0.id=ar1_0.satpam_id 
+    left join
+        users s1_1 
+            on s1_0.id=s1_1.id 
+    left join
+        approvals a1_0 
+            on r1_0.reservation_id=a1_0.reservation_id 
+    left join
+        admins a2_0 
+            on a2_0.id=a1_0.admin_id 
+    left join
+        users a2_1 
+            on a2_0.id=a2_1.id 
+    left join
+        mahasiswa m1_0 
+            on m1_0.id=r1_0.mahasiswa_id 
+    left join
+        users m1_1 
+            on m1_0.id=m1_1.id 
+    left join
+        rooms r2_0 
+            on r2_0.room_id=r1_0.room_id 
+    where
+        r1_0.reservation_id=?
+Hibernate: 
+    select
+        n1_0.notification_id,
+        n1_0.created_at,
+        n1_0.penerima_id,
+        n1_0.pesan,
+        n1_0.reservation_id,
+        n1_0.status_baca 
+    from
+        notifications n1_0 
+    where
+        n1_0.reservation_id=?
+Hibernate: 
+    select
+        ar1_0.record_id,
+        ar1_0.catatan_pelanggaran,
+        ar1_0.check_in_time,
+        ar1_0.check_out_time,
+        ar1_0.reservation_id,
+        ar1_0.satpam_id 
+    from
+        access_records ar1_0 
+    where
+        ar1_0.reservation_id=?
+2026-06-14T18:29:44.793+07:00  INFO 15980 --- [reservasi] [   File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 41 class path changes (0 additions, 41 deletions, 0 modifications)
+2026-06-14T18:29:44.809+07:00  INFO 15980 --- [reservasi] [       Thread-1] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-06-14T18:29:44.845+07:00  INFO 15980 --- [reservasi] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-06-14T18:29:44.855+07:00  INFO 15980 --- [reservasi] [       Thread-1] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-06-14T18:29:44.871+07:00  INFO 15980 --- [reservasi] [       Thread-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-06-14T18:29:44.885+07:00  INFO 15980 --- [reservasi] [       Thread-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.6)
+
+2026-06-14T18:29:45.055+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.tup.reservasi.ReservasiApplication   : Starting ReservasiApplication using Java 21.0.10 with PID 15980 (D:\dosen sakit\reservasi\target\classes started by aarif in D:\dosen sakit\reservasi)
+2026-06-14T18:29:45.055+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.tup.reservasi.ReservasiApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-06-14T18:29:45.379+07:00  INFO 15980 --- [reservasi] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-06-14T18:29:45.387+07:00  INFO 15980 --- [reservasi] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2026-06-14T18:29:45.509+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-06-14T18:29:45.509+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-06-14T18:29:45.509+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-06-14T18:29:45.526+07:00  INFO 15980 --- [reservasi] [  restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 456 ms
+2026-06-14T18:29:45.628+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-06-14T18:29:45.657+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-06-14T18:29:45.668+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-06-14T18:29:45.671+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@346a39ed
+2026-06-14T18:29:45.671+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-06-14T18:29:45.676+07:00  WARN 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.core                   : HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly.The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2026-06-14T18:29:45.676+07:00  WARN 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-06-14T18:29:45.676+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/reservasi_ruang?useSSL=false&serverTimezone=Asia/Jakarta]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 5.5.5
+	Default catalog/schema: reservasi_ruang/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-06-14T18:29:45.700+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-06-14T18:29:45.700+07:00  INFO 15980 --- [reservasi] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-06-14T18:29:45.725+07:00  WARN 15980 --- [reservasi] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-06-14T18:29:45.754+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.b.w.a.WelcomePageHandlerMapping      : Adding welcome page template: index
+2026-06-14T18:29:46.097+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-06-14T18:29:46.105+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.tup.reservasi.ReservasiApplication   : Started ReservasiApplication in 1.117 seconds (process running for 170.709)
+2026-06-14T18:29:46.113+07:00  INFO 15980 --- [reservasi] [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2026-06-14T18:29:49.093+07:00  INFO 15980 --- [reservasi] [   File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 41 class path changes (41 additions, 0 deletions, 0 modifications)
+2026-06-14T18:29:49.093+07:00  INFO 15980 --- [reservasi] [       Thread-5] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-06-14T18:29:49.104+07:00  INFO 15980 --- [reservasi] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-06-14T18:29:49.105+07:00  INFO 15980 --- [reservasi] [       Thread-5] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-06-14T18:29:49.105+07:00  INFO 15980 --- [reservasi] [       Thread-5] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2026-06-14T18:29:49.105+07:00  INFO 15980 --- [reservasi] [       Thread-5] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.6)
+
+2026-06-14T18:29:49.212+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.tup.reservasi.ReservasiApplication   : Starting ReservasiApplication using Java 21.0.10 with PID 15980 (D:\dosen sakit\reservasi\target\classes started by aarif in D:\dosen sakit\reservasi)
+2026-06-14T18:29:49.212+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.tup.reservasi.ReservasiApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-06-14T18:29:49.530+07:00  INFO 15980 --- [reservasi] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-06-14T18:29:49.562+07:00  INFO 15980 --- [reservasi] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 29 ms. Found 6 JPA repository interfaces.
+2026-06-14T18:29:49.693+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-06-14T18:29:49.693+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-06-14T18:29:49.693+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-06-14T18:29:49.709+07:00  INFO 15980 --- [reservasi] [  restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 489 ms
+2026-06-14T18:29:49.757+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-06-14T18:29:49.774+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-06-14T18:29:49.774+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-06-14T18:29:49.774+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection com.mysql.cj.jdbc.ConnectionImpl@76e27089
+2026-06-14T18:29:49.774+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-06-14T18:29:49.790+07:00  WARN 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.core                   : HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly.The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2026-06-14T18:29:49.790+07:00  WARN 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-06-14T18:29:49.790+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/reservasi_ruang?useSSL=false&serverTimezone=Asia/Jakarta]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 5.5.5
+	Default catalog/schema: reservasi_ruang/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-06-14T18:29:50.139+07:00  INFO 15980 --- [reservasi] [  restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-06-14T18:29:50.380+07:00  INFO 15980 --- [reservasi] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-06-14T18:29:50.562+07:00  WARN 15980 --- [reservasi] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-06-14T18:29:50.570+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.b.w.a.WelcomePageHandlerMapping      : Adding welcome page template: index
+2026-06-14T18:29:50.655+07:00  INFO 15980 --- [reservasi] [  restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-06-14T18:29:50.655+07:00  INFO 15980 --- [reservasi] [  restartedMain] com.tup.reservasi.ReservasiApplication   : Started ReservasiApplication in 1.476 seconds (process running for 175.263)
+2026-06-14T18:29:50.666+07:00  INFO 15980 --- [reservasi] [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged

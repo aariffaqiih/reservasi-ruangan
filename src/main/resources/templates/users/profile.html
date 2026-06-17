@@ -1,43 +1,106 @@
 <!DOCTYPE html>
+<!--
+    Penanggung jawab: Amelia Sofiana Makharomi - 103112400233.
+    Modul: User dan Mahasiswa.
+-->
 <html lang="id" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pengaturan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Profil User</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="app-shell">
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    <div class="app-frame">
         <aside class="sidebar">
-            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
-            <nav class="nav-menu">
-                <a class="nav-item" th:href="@{/dashboard}">Dashboard</a>
-                <a class="nav-item" th:href="@{/api/notifications}">Notifikasi</a>
-                <a class="nav-item active" th:href="@{/api/users/profile}">Pengaturan</a>
+            <a class="brand" th:href="@{/}">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span><span class="brand-name">Peminjaman Ruang Kelas</span><span class="brand-kicker">Profil Mahasiswa</span></span>
+            </a>
+            <nav aria-label="Navigasi utama">
+                <ul class="nav-list">
+                    <li><a class="nav-link" th:href="@{/mahasiswa/dashboard}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Dashboard</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/reservations/form}"><span class="nav-icon icon-reservation" aria-hidden="true"></span>Peminjaman</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/reservations}"><span class="nav-icon icon-approval" aria-hidden="true"></span>Riwayat</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/rooms}"><span class="nav-icon icon-room" aria-hidden="true"></span>Ruang Kelas</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/notifications}"><span class="nav-icon icon-notification" aria-hidden="true"></span>Notifikasi</a></li>
+                </ul>
             </nav>
-        </aside>
-        <main class="page">
-            <div class="page-inner">
-                <div class="page-title"><span class="eyebrow">8. Pengaturan</span><h1>Pengaturan</h1><p>Kelola akun dan preferensi Anda.</p></div>
-                <br>
-                <section class="card">
-                    <form action="/api/users/profile" method="post">
-                        <div class="form-grid">
-                            <div><div class="avatar" style="width:110px;height:110px;font-size:36px">AP</div><br><button class="secondary" type="button">Ubah Foto</button></div>
-                            <div>
-                                <label for="nama">Nama Lengkap</label><input type="text" id="nama" name="nama" value="Aisyah Putri">
-                                <br><br>
-                                <label for="nim">NIM</label><input type="text" id="nim" name="nim" value="2201234567">
-                                <br><br>
-                                <label for="email">Email</label><input type="email" id="email" name="email" value="aisyah@univ.ac.id">
-                                <br><br>
-                                <label for="noHp">No. Telepon</label><input type="text" id="noHp" name="noHp" value="0812-3456-7890">
-                            </div>
-                        </div>
-                        <div class="form-actions"><button type="submit">Simpan Perubahan</button></div>
-                    </form>
-                </section>
+            <div class="sidebar-help">
+                <strong>Profil lengkap</strong>
+                <p>Pastikan email dan nomor HP aktif agar informasi reservasi mudah diterima.</p>
             </div>
+        </aside>
+
+        <main class="app-main" id="main-content">
+            <div class="sukses" th:if="${sukses}" th:text="${sukses}">Pesan sukses</div>
+            <div class="error" th:if="${error}" th:text="${error}">Pesan error</div>
+
+            <section class="page-hero" aria-labelledby="page-title">
+                <div class="page-title-card">
+                    <span class="eyebrow">8. Pengaturan</span>
+                    <h1 id="page-title">Profil User</h1>
+                    <p>Ubah data profil dasar untuk kebutuhan identitas reservasi ruang.</p>
+                </div>
+            </section>
+
+            <section class="empty-state" th:if="${profile == null}">
+                <h2>Profil tidak ditemukan</h2>
+                <p>Data profil belum tersedia untuk diedit.</p>
+                <div class="top-actions">
+                    <a class="button" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
+                    <a class="button secondary" th:href="@{/}">Beranda</a>
+                </div>
+            </section>
+
+            <section class="form-card" th:if="${profile != null}" aria-labelledby="profile-form-title">
+                <h2 id="profile-form-title">Data Profil</h2>
+                <div class="profile-layout">
+                    <aside class="avatar-card" aria-label="Foto profil">
+                        <span class="avatar" aria-hidden="true"></span>
+                        <strong th:text="${profile.nama}">Nama Mahasiswa</strong>
+                        <span class="pill">Mahasiswa</span>
+                    </aside>
+
+                    <form th:action="@{/mahasiswa/profile/{id}(id=${profile.id})}" th:object="${profile}" method="post" class="form-grid">
+                        <div class="error field-wide" th:if="${#fields.hasAnyErrors()}">
+                            <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Pesan error</p>
+                        </div>
+
+                        <div class="field-wide">
+                            <label for="nama">Nama</label>
+                            <input type="text" id="nama" th:field="*{nama}" autocomplete="name" required>
+                        </div>
+
+                        <div class="field-wide">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" th:field="*{email}" autocomplete="email" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="noHp">No HP</label>
+                            <input type="text" id="noHp" th:field="*{noHp}" autocomplete="tel">
+                        </div>
+
+                        <div class="field">
+                            <label for="prodi">Prodi</label>
+                            <input type="text" id="prodi" th:field="*{prodi}">
+                        </div>
+
+                        <div class="field">
+                            <label for="angkatan">Angkatan</label>
+                            <input type="number" id="angkatan" th:field="*{angkatan}">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit">Simpan Perubahan</button>
+                            <a class="button secondary" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
+                        </div>
+                    </form>
+                </div>
+            </section>
         </main>
     </div>
 </body>

@@ -1,55 +1,70 @@
 <!DOCTYPE html>
+<!--
+    Penanggung jawab: Atha Muyassar - 103112430185.
+    Modul: Admin.
+-->
 <html lang="id" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
     <title>Dashboard Admin</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="app-shell">
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    <div class="app-frame">
         <aside class="sidebar">
-            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
-            <nav class="nav-menu">
-                <a class="nav-item active" th:href="@{/admin/dashboard}">Dashboard</a>
-                <a class="nav-item" th:href="@{/admin/approvals}">Approval</a>
-                <a class="nav-item" th:href="@{/api/rooms}">Ruang Kelas</a>
-                <a class="nav-item" th:href="@{/api/reservations}">Riwayat</a>
+            <a class="brand" th:href="@{/}">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span><span class="brand-name">Peminjaman Ruang Kelas</span><span class="brand-kicker">Panel Admin</span></span>
+            </a>
+            <nav aria-label="Navigasi utama">
+                <ul class="nav-list">
+                    <li><a class="nav-link is-active" th:href="@{/admin/dashboard}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Dashboard</a></li>
+                    <li><a class="nav-link" th:href="@{/admin/approvals}"><span class="nav-icon icon-approval" aria-hidden="true"></span>Approval</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/rooms}"><span class="nav-icon icon-room" aria-hidden="true"></span>Ruang Kelas</a></li>
+                    <li><a class="nav-link" th:href="@{/}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Beranda</a></li>
+                </ul>
             </nav>
-            <div class="sidebar-footer">
-                <div class="profile-mini"><div class="avatar">AD</div><strong>Admin</strong><p class="muted">Unit Akademik</p></div>
-                <form th:action="@{/logout}" method="post"><button class="secondary" type="submit">Logout</button></form>
+            <div class="sidebar-help">
+                <strong>Butuh bantuan?</strong>
+                <p>Gunakan menu Approval untuk memproses reservasi yang masuk.</p>
             </div>
         </aside>
-        <main class="page">
-            <div class="page-inner">
-                <div class="topbar">
-                    <div class="page-title">
-                        <span class="eyebrow">Dashboard Admin</span>
-                        <h1>Kelola persetujuan reservasi</h1>
-                        <p>Verifikasi jadwal, ruang, dan status peminjaman.</p>
-                    </div>
-                    <a class="button" th:href="@{/admin/approvals}">Buka Approval</a>
+
+        <main class="app-main" id="main-content">
+            <section class="page-hero" aria-labelledby="page-title">
+                <div class="page-title-card">
+                    <span class="eyebrow">1. Dashboard</span>
+                    <h1 id="page-title">Dashboard Admin</h1>
+                    <p>Verifikasi reservasi yang masuk dan pantau riwayat keputusan dalam satu tampilan ringkas.</p>
                 </div>
-                <section class="stats-grid">
-                    <article class="stat-card"><div class="stat-icon tone-orange">◷</div><div class="stat-number">2</div><strong>Menunggu</strong><p class="muted">Butuh persetujuan</p></article>
-                    <article class="stat-card"><div class="stat-icon tone-green">✓</div><div class="stat-number">8</div><strong>Disetujui</strong><p class="muted">Bulan ini</p></article>
-                    <article class="stat-card"><div class="stat-icon tone-red">×</div><div class="stat-number">1</div><strong>Ditolak</strong><p class="muted">Bulan ini</p></article>
-                    <article class="stat-card"><div class="stat-icon tone-pink">▣</div><div class="stat-number">5</div><strong>Ruangan</strong><p class="muted">Tersedia</p></article>
-                </section>
-                <section class="card">
-                    <div class="section-title"><h2>Alur Admin</h2><span class="badge pink">/admin/approvals</span></div>
-                    <table>
-                        <thead><tr><th>Fitur</th><th>Endpoint</th><th>Keterangan</th></tr></thead>
-                        <tbody>
-                            <tr><td>Daftar pending</td><td>/admin/approvals</td><td>Menampilkan reservasi pending dan riwayat approval.</td></tr>
-                            <tr><td>Setujui</td><td>/admin/approvals/{id}/approve</td><td>Mengubah status reservasi menjadi disetujui.</td></tr>
-                            <tr><td>Tolak</td><td>/admin/approvals/{id}/reject</td><td>Menolak reservasi dengan catatan.</td></tr>
-                            <tr><td>Minta revisi</td><td>/admin/approvals/{id}/revision</td><td>Meminta mahasiswa memperbaiki data.</td></tr>
-                        </tbody>
-                    </table>
-                </section>
+            </section>
+
+            <div class="top-actions">
+                <a class="button" th:href="@{/admin/approvals}">Buka Approval Reservasi</a>
+                <a class="button secondary" th:href="@{/}">Beranda</a>
             </div>
+
+            <section class="stat-grid" aria-label="Ringkasan admin">
+                <article class="stat-card">
+                    <span class="stat-icon icon-approval" aria-hidden="true"></span>
+                    <div>
+                        <h2>Menunggu Approval</h2>
+                        <p class="number" th:text="${pendingReservations == null ? 0 : #lists.size(pendingReservations)}">0</p>
+                        <p>Reservasi perlu keputusan admin.</p>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-icon icon-reservation" aria-hidden="true"></span>
+                    <div>
+                        <h2>Riwayat Approval</h2>
+                        <p class="number" th:text="${approvals == null ? 0 : #lists.size(approvals)}">0</p>
+                        <p>Total keputusan yang sudah tercatat.</p>
+                    </div>
+                </article>
+            </section>
         </main>
     </div>
 </body>

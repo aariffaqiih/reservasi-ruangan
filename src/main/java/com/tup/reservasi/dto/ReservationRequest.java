@@ -3,111 +3,72 @@ package com.tup.reservasi.dto;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.tup.reservasi.entity.Mahasiswa;
+import com.tup.reservasi.entity.Reservation;
+import com.tup.reservasi.entity.Room;
+import com.tup.reservasi.enums.ReservationStatus;
 
-/*
- * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
- *
- * Arahan DTO request:
- * - Data untuk ajukan reservasi:
- *   mahasiswaId: String
- *   roomId: String
- *   tanggal: LocalDate
- *   jamMulai: LocalTime
- *   jamSelesai: LocalTime
- *   tujuan: String
- * - Behaviour terkait:
- *   Mahasiswa.ajukanReservasi(), Reservation.ajukan(), Reservation.validasiWaktu(),
- *   ReservationService.createReservation(), ReservationService.validateAvailability().
- */
+import lombok.Data;
 
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ReservationRequest {
 
-    @NotBlank(message = "ID mahasiswa tidak boleh kosong")
-    private String mahasiswaId;
-
-    @NotBlank(message = "ID ruang tidak boleh kosong")
-    private String roomId;
-
-    @NotNull(message = "Tanggal reservasi tidak boleh kosong")
-    @FutureOrPresent(message = "Tanggal reservasi tidak boleh di masa lalu")
+    private Long reservationId;
+    private Long mahasiswaId;
+    private Long roomId;
+    private Ref mahasiswa;
+    private Ref room;
     private LocalDate tanggal;
-
-    @NotNull(message = "Jam mulai tidak boleh kosong")
     private LocalTime jamMulai;
-
-    @NotNull(message = "Jam selesai tidak boleh kosong")
     private LocalTime jamSelesai;
-
-    @NotBlank(message = "Tujuan reservasi tidak boleh kosong")
-    @Size(max = 255, message = "Tujuan reservasi maksimal 255 karakter")
     private String tujuan;
+    private ReservationStatus status;
 
-    public ReservationRequest() {
+    public Reservation toReservation() {
+        Reservation reservation = new Reservation();
+        reservation.setReservationId(reservationId);
+        reservation.setMahasiswa(toMahasiswa());
+        reservation.setRoom(toRoom());
+        reservation.setTanggal(tanggal);
+        reservation.setJamMulai(jamMulai);
+        reservation.setJamSelesai(jamSelesai);
+        reservation.setTujuan(tujuan);
+        reservation.setStatus(status);
+        return reservation;
     }
 
-    public ReservationRequest(String mahasiswaId, String roomId, LocalDate tanggal, LocalTime jamMulai,
-            LocalTime jamSelesai, String tujuan) {
-        this.mahasiswaId = mahasiswaId;
-        this.roomId = roomId;
-        this.tanggal = tanggal;
-        this.jamMulai = jamMulai;
-        this.jamSelesai = jamSelesai;
-        this.tujuan = tujuan;
+    private Mahasiswa toMahasiswa() {
+        Long id = mahasiswaId;
+        if (id == null && mahasiswa != null) {
+            id = mahasiswa.getId();
+        }
+        if (id == null) {
+            return null;
+        }
+        Mahasiswa result = new Mahasiswa();
+        result.setId(id);
+        return result;
     }
 
-    public boolean validasiWaktu() {
-        return jamMulai != null && jamSelesai != null && jamMulai.isBefore(jamSelesai);
+    private Room toRoom() {
+        Long id = roomId;
+        if (id == null && room != null) {
+            id = room.getRoomId();
+        }
+        if (id == null) {
+            return null;
+        }
+        Room result = new Room();
+        result.setRoomId(id);
+        return result;
     }
 
-    public String getMahasiswaId() {
-        return mahasiswaId;
-    }
-
-    public void setMahasiswaId(String mahasiswaId) {
-        this.mahasiswaId = mahasiswaId;
-    }
-
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
-    }
-
-    public LocalDate getTanggal() {
-        return tanggal;
-    }
-
-    public void setTanggal(LocalDate tanggal) {
-        this.tanggal = tanggal;
-    }
-
-    public LocalTime getJamMulai() {
-        return jamMulai;
-    }
-
-    public void setJamMulai(LocalTime jamMulai) {
-        this.jamMulai = jamMulai;
-    }
-
-    public LocalTime getJamSelesai() {
-        return jamSelesai;
-    }
-
-    public void setJamSelesai(LocalTime jamSelesai) {
-        this.jamSelesai = jamSelesai;
-    }
-
-    public String getTujuan() {
-        return tujuan;
-    }
-
-    public void setTujuan(String tujuan) {
-        this.tujuan = tujuan;
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Ref {
+        private Long id;
+        private Long roomId;
     }
 }

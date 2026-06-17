@@ -1,134 +1,224 @@
 package com.tup.reservasi.service;
 
-/*
- * Penanggung jawab: Tadzkiroh Aziziyah Haqia.
- *
- * Arahan dari class-diagram:
- * - Service menyimpan/mengelola:
- *   accessRecords: List<AccessRecord>
- * - Behaviour yang perlu dibuat:
- *   checkIn(): AccessRecord
- *   checkOut(): AccessRecord
- *   reportIssue()
- * - Aturan yang perlu dipikirkan saat coding:
- *   checkIn membuat/mengisi AccessRecord dengan reservation, satpam, dan checkInTime.
- *   checkOut mengisi checkOutTime untuk AccessRecord yang sudah check-in.
- *   reportIssue mengisi catatanPelanggaran atau catatan kendala.
- *   proses akses hanya untuk Reservation yang sudah valid/disetujui.
- */
-
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.tup.reservasi.dto.AccessIssueRequest;
 import com.tup.reservasi.entity.AccessRecord;
 import com.tup.reservasi.entity.Reservation;
 import com.tup.reservasi.entity.Satpam;
+import com.tup.reservasi.entity.User;
 import com.tup.reservasi.enums.ReservationStatus;
-import com.tup.reservasi.exception.ReservationException;
 import com.tup.reservasi.repository.AccessRecordRepository;
 import com.tup.reservasi.repository.ReservationRepository;
 import com.tup.reservasi.repository.UserRepository;
 
+/*
+ * Penanggung jawab: Tadzkiroh Aziziyah Haqia - 103112400242.
+ * Modul: AccessControlService.
+ */
 @Service
+@Transactional
 public class AccessControlService {
 
     private final AccessRecordRepository accessRecordRepository;
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final List<AccessRecord> accessRecords = new ArrayList<>();
 
-    public AccessControlService(
-            AccessRecordRepository accessRecordRepository,
+    public AccessControlService(AccessRecordRepository accessRecordRepository,
             ReservationRepository reservationRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            NotificationService notificationService) {
         this.accessRecordRepository = accessRecordRepository;
         this.reservationRepository = reservationRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
-    @Transactional
-    public AccessRecord checkIn(String reservationId, String satpamId) {
-        if (reservationId == null || reservationId.isBlank()) {
-            throw new IllegalArgumentException("ID reservasi tidak boleh kosong");
-        }
-        if (satpamId == null || satpamId.isBlank()) {
-            throw new IllegalArgumentException("ID satpam tidak boleh kosong");
-        }
-
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new ReservationException("Reservasi tidak ditemukan"));
-
-        if (reservation.getStatus() != ReservationStatus.APPROVED) {
-            throw new ReservationException("Reservasi belum disetujui, tidak dapat check-in");
-        }
-
-        boolean sudahCheckIn = accessRecordRepository.findByReservationId(reservationId).isPresent();
-        if (sudahCheckIn) {
-            throw new ReservationException("Reservasi ini sudah melakukan check-in");
-        }
-
-        Satpam satpam = (Satpam) userRepository.findById(satpamId)
-                .orElseThrow(() -> new IllegalArgumentException("Satpam tidak ditemukan"));
-
-        AccessRecord record = satpam.konfirmasiCheckIn(reservation);
-        return accessRecordRepository.save(record);
-    }
-
-    @Transactional
-    public AccessRecord checkOut(String reservationId, String satpamId) {
-        if (reservationId == null || reservationId.isBlank()) {
-            throw new IllegalArgumentException("ID reservasi tidak boleh kosong");
-        }
-
-        AccessRecord record = accessRecordRepository.findByReservationId(reservationId)
-                .orElseThrow(() -> new ReservationException("Data check-in untuk reservasi ini tidak ditemukan"));
-
-        if (record.getCheckInTime() == null) {
-            throw new ReservationException("Tidak dapat check-out sebelum check-in");
-        }
-
-        if (record.getCheckOutTime() != null) {
-            throw new ReservationException("Reservasi ini sudah melakukan check-out");
-        }
-
-        Satpam satpam = (Satpam) userRepository.findById(satpamId)
-                .orElseThrow(() -> new IllegalArgumentException("Satpam tidak ditemukan"));
-
-        satpam.konfirmasiCheckOut(record);
-        return accessRecordRepository.save(record);
-    }
-
-    @Transactional
-    public AccessRecord reportIssue(AccessIssueRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Request tidak boleh kosong");
-        }
-
-        AccessRecord record = accessRecordRepository.findByReservationId(request.getReservationId())
-                .orElseThrow(() -> new ReservationException("Data check-in untuk reservasi ini tidak ditemukan"));
-
-        Satpam satpam = (Satpam) userRepository.findById(request.getSatpamId())
-                .orElseThrow(() -> new IllegalArgumentException("Satpam tidak ditemukan"));
-
-        satpam.catatKendala(record, request.getCatatanPelanggaran());
-        return accessRecordRepository.save(record);
-    }
-
+    @Transactional(readOnly = true)
     public List<AccessRecord> getAllRecords() {
-        return accessRecordRepository.findAll();
+        return this.accessRecordRepository.findAll();
     }
 
-    public List<AccessRecord> getRecordsBySatpam(String satpamId) {
-        return accessRecordRepository.findBySatpamId(satpamId);
+    @Transactional(readOnly = true)
+    public AccessRecord getRecordById(Long recordId) {
+        return this.accessRecordRepository.findById(recordId)
+                .orElseThrow(() -> new RuntimeException("AccessRecord tidak ditemukan"));
     }
 
+    @Transactional(readOnly = true)
     public List<AccessRecord> getBelumCheckOut() {
-        return accessRecordRepository.findBelumCheckOut();
+        return this.accessRecordRepository.findByCheckOutTimeIsNull();
     }
 
-    public List<AccessRecord> getRecordsWithKendala() {
-        return accessRecordRepository.findWithKendala();
+    public AccessRecord checkIn(Satpam satpam, Reservation reservation) {
+        validateReservationCanCheckIn(reservation);
+        AccessRecord record = satpam.konfirmasiCheckIn(reservation);
+        if (reservation != null && reservation.getAccessRecord() == record) {
+            reservation.setAccessRecord(null);
+        }
+        unlinkRecordFromSatpam(satpam, record);
+        AccessRecord saved = this.accessRecordRepository.save(record);
+        linkSavedRecord(satpam, saved);
+        this.accessRecords.add(saved);
+        if (saved.getReservation() != null && saved.getReservation().getMahasiswa() != null) {
+            this.notificationService.sendStatusUpdate(
+                    saved.getReservation().getMahasiswa(),
+                    saved.getReservation(),
+                    "Check-in ruang berhasil dikonfirmasi");
+        }
+        return saved;
+    }
+
+    public AccessRecord checkIn(Long satpamId, Long reservationId) {
+        return checkIn(getSatpam(satpamId), getReservation(reservationId));
+    }
+
+    public AccessRecord checkOut(Satpam satpam, Long recordId) {
+        AccessRecord record = this.accessRecordRepository.findById(recordId)
+                .orElseThrow(() -> new RuntimeException("AccessRecord tidak ditemukan"));
+        validateRecordCanCheckOut(satpam, record);
+        satpam.konfirmasiCheckOut(record);
+        AccessRecord saved = this.accessRecordRepository.save(record);
+        linkSavedRecord(satpam, saved);
+        if (saved.getReservation() != null && saved.getReservation().getMahasiswa() != null) {
+            this.notificationService.sendStatusUpdate(
+                    saved.getReservation().getMahasiswa(),
+                    saved.getReservation(),
+                    "Check-out ruang berhasil dikonfirmasi");
+        }
+        return saved;
+    }
+
+    public AccessRecord checkOut(Long satpamId, Long recordId) {
+        return checkOut(getSatpam(satpamId), recordId);
+    }
+
+    public void reportIssue(Satpam satpam, Long recordId, String deskripsi) {
+        AccessRecord record = this.accessRecordRepository.findById(recordId)
+                .orElseThrow(() -> new RuntimeException("AccessRecord tidak ditemukan"));
+        satpam.catatKendala(record, deskripsi);
+        this.accessRecordRepository.save(record);
+        if (record.getReservation() != null && record.getReservation().getMahasiswa() != null) {
+            this.notificationService.sendStatusUpdate(
+                    record.getReservation().getMahasiswa(),
+                    record.getReservation(),
+                    "Kendala akses ruang dicatat: " + deskripsi);
+        }
+    }
+
+    public void reportIssue(Long satpamId, Long recordId, String deskripsi) {
+        reportIssue(getSatpam(satpamId), recordId, deskripsi);
+    }
+
+    public AccessRecord createRecord(AccessRecord record) {
+        AccessRecord saved = this.accessRecordRepository.save(record);
+        this.accessRecords.add(saved);
+        return saved;
+    }
+
+    public AccessRecord updateRecord(Long recordId, AccessRecord updatedData) {
+        AccessRecord recordExisting = getRecordById(recordId);
+        recordExisting.setReservation(updatedData.getReservation());
+        recordExisting.setSatpam(updatedData.getSatpam());
+        recordExisting.setCheckInTime(updatedData.getCheckInTime());
+        recordExisting.setCheckOutTime(updatedData.getCheckOutTime());
+        recordExisting.setCatatanPelanggaran(updatedData.getCatatanPelanggaran());
+        return this.accessRecordRepository.save(recordExisting);
+    }
+
+    private void unlinkRecordFromSatpam(Satpam satpam, AccessRecord record) {
+        if (satpam == null || satpam.getAccessRecords() == null) {
+            return;
+        }
+        satpam.getAccessRecords().removeIf(existing -> existing == record);
+    }
+
+    private void linkSavedRecord(Satpam satpam, AccessRecord saved) {
+        if (saved.getReservation() != null) {
+            saved.getReservation().setAccessRecord(saved);
+            this.reservationRepository.save(saved.getReservation());
+        }
+        if (satpam != null && satpam.getAccessRecords() != null) {
+            List<AccessRecord> satpamRecords = satpam.getAccessRecords();
+            for (int i = 0; i < satpamRecords.size(); i++) {
+                AccessRecord existing = satpamRecords.get(i);
+                if (existing == saved || isSameRecord(existing, saved)) {
+                    satpamRecords.set(i, saved);
+                    return;
+                }
+            }
+            satpamRecords.add(saved);
+        }
+    }
+
+    private boolean isSameRecord(AccessRecord first, AccessRecord second) {
+        if (first == second) {
+            return true;
+        }
+        return first != null
+                && second != null
+                && first.getRecordId() != null
+                && first.getRecordId().equals(second.getRecordId());
+    }
+
+    private void validateReservationCanCheckIn(Reservation reservation) {
+        if (reservation == null) {
+            throw new RuntimeException("Reservasi tidak ditemukan");
+        }
+        if (reservation.getStatus() != ReservationStatus.APPROVED) {
+            throw new RuntimeException("Reservasi hanya dapat check-in jika status APPROVED");
+        }
+        if (reservation.getReservationId() != null
+                && this.accessRecordRepository.findByReservation_ReservationId(reservation.getReservationId()).isPresent()) {
+            throw new RuntimeException("Reservasi sudah memiliki AccessRecord");
+        }
+    }
+
+    private void validateRecordCanCheckOut(Satpam satpam, AccessRecord record) {
+        if (record.getCheckOutTime() != null) {
+            throw new RuntimeException("AccessRecord sudah check-out");
+        }
+        if (record.getSatpam() == null || satpam == null || satpam.getId() == null
+                || !satpam.getId().equals(record.getSatpam().getId())) {
+            throw new RuntimeException("Check-out hanya dapat dilakukan oleh satpam yang melakukan check-in");
+        }
+    }
+
+    private Satpam getSatpam(Long satpamId) {
+        User user = this.userRepository.findById(satpamId)
+                .orElseThrow(() -> new RuntimeException("Satpam tidak ditemukan"));
+        if (!(user instanceof Satpam satpam)) {
+            throw new RuntimeException("User bukan Satpam");
+        }
+        return satpam;
+    }
+
+    private Reservation getReservation(Long reservationId) {
+        return this.reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservasi tidak ditemukan"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<AccessRecord> getAccessRecords() {
+        return this.accessRecords;
+    }
+
+    public void deleteRecord(Long recordId) {
+        AccessRecord record = getRecordById(recordId);
+        Reservation reservation = record.getReservation();
+        Satpam satpam = record.getSatpam();
+        if (reservation != null && isSameRecord(reservation.getAccessRecord(), record)) {
+            reservation.setAccessRecord(null);
+        }
+        unlinkRecordFromSatpam(satpam, record);
+        record.setReservation(null);
+        record.setSatpam(null);
+        this.accessRecords.removeIf(existing -> isSameRecord(existing, record));
+        this.accessRecordRepository.delete(record);
     }
 }

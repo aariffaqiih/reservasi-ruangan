@@ -1,44 +1,98 @@
 <!DOCTYPE html>
+<!--
+    Penanggung jawab: Aarif Rahmaan Jalaluddin Faqiih - 103112430182.
+    Modul: Reservation.
+-->
 <html lang="id" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riwayat Peminjaman</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Daftar Reservasi</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="app-shell">
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    <div class="app-frame">
         <aside class="sidebar">
-            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
-            <nav class="nav-menu">
-                <a class="nav-item" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
-                <a class="nav-item active" th:href="@{/api/reservations/history}">Riwayat</a>
-                <a class="nav-item" th:href="@{/api/notifications}">Notifikasi</a>
+            <a class="brand" th:href="@{/}">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span><span class="brand-name">Peminjaman Ruang Kelas</span><span class="brand-kicker">Panel Mahasiswa</span></span>
+            </a>
+            <nav aria-label="Navigasi utama">
+                <ul class="nav-list">
+                    <li><a class="nav-link" th:href="@{/mahasiswa/dashboard}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Dashboard</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/reservations/form}"><span class="nav-icon icon-reservation" aria-hidden="true"></span>Peminjaman</a></li>
+                    <li><a class="nav-link is-active" th:href="@{/mahasiswa/reservations}"><span class="nav-icon icon-approval" aria-hidden="true"></span>Riwayat</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/rooms}"><span class="nav-icon icon-room" aria-hidden="true"></span>Ruang Kelas</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/notifications}"><span class="nav-icon icon-notification" aria-hidden="true"></span>Notifikasi</a></li>
+                </ul>
             </nav>
+            <div class="sidebar-help">
+                <strong>Status reservasi</strong>
+                <p>Gunakan filter ID mahasiswa untuk melihat data yang lebih spesifik.</p>
+            </div>
         </aside>
-        <main class="page">
-            <div class="page-inner">
-                <div class="page-title"><span class="eyebrow">6. Riwayat Peminjaman</span><h1>Riwayat Peminjaman</h1><p>Riwayat semua peminjaman ruang kelas Anda.</p></div>
-                <br>
-                <section class="card">
-                    <input class="search" type="search" placeholder="Cari kegiatan...">
-                    <div class="tabs"><span class="tab active">Semua</span><span class="tab">Disetujui</span><span class="tab">Menunggu</span><span class="tab">Ditolak</span><span class="tab">Selesai</span></div>
+
+        <main class="app-main" id="main-content">
+            <div class="sukses" th:if="${sukses}" th:text="${sukses}">Pesan sukses</div>
+
+            <section class="page-hero" aria-labelledby="page-title">
+                <div class="page-title-card">
+                    <span class="eyebrow">6. Riwayat Peminjaman</span>
+                    <h1 id="page-title">Daftar Reservasi</h1>
+                    <p>Status reservasi yang tersimpan di database, lengkap dengan ruang, waktu, dan tujuan kegiatan.</p>
+                </div>
+            </section>
+
+            <div class="top-actions">
+                <a class="button" th:href="@{/mahasiswa/reservations/form}">Ajukan Reservasi</a>
+                <a class="button secondary" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
+            </div>
+
+            <form th:action="@{/mahasiswa/reservations}" method="get" class="filter-form">
+                <div class="field">
+                    <label for="mahasiswaId">Filter ID Mahasiswa</label>
+                    <input type="number" id="mahasiswaId" name="mahasiswaId" placeholder="Kosongkan untuk semua data">
+                </div>
+                <button type="submit">Cari</button>
+            </form>
+
+            <section class="table-card" aria-labelledby="reservation-table-title">
+                <div class="table-card-header">
+                    <h2 id="reservation-table-title">Riwayat Reservasi</h2>
+                    <span class="pill">Database</span>
+                </div>
+                <div class="table-shell">
                     <table>
-                        <thead><tr><th>ID</th><th>Kegiatan</th><th>Ruang</th><th>Tanggal</th><th>Status</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Mahasiswa</th>
+                                <th>Ruang</th>
+                                <th>Tanggal</th>
+                                <th>Jam</th>
+                                <th>Tujuan</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <tr th:each="reservation : ${reservations}">
-                                <td th:text="${reservation.reservationId}">PMJ-0001</td>
-                                <td th:text="${reservation.tujuan}">Rapat Himpunan</td>
-                                <td th:text="${reservation.roomId}">REK-201</td>
-                                <td th:text="${reservation.tanggal}">15 Mei 2025</td>
-                                <td><span class="badge green" th:text="${reservation.status}">Disetujui</span></td>
+                                <td th:text="${reservation.reservationId}">RES001</td>
+                                <td th:text="${reservation.mahasiswa == null ? '-' : reservation.mahasiswa.nama}">Nama</td>
+                                <td th:text="${reservation.room == null ? '-' : reservation.room.namaRuang}">Ruang</td>
+                                <td th:text="${reservation.tanggal}">2026-06-12</td>
+                                <td><span th:text="${reservation.jamMulai}">08:00</span> - <span th:text="${reservation.jamSelesai}">10:00</span></td>
+                                <td th:text="${reservation.tujuan}">Diskusi</td>
+                                <td><span class="status-badge" th:text="${reservation.status}">PENDING</span></td>
                             </tr>
-                            <tr th:if="${reservations == null or #lists.isEmpty(reservations)}"><td>PMJ-0001</td><td>Rapat Himpunan</td><td>REK-201</td><td>15 Mei 2025</td><td><span class="badge green">Disetujui</span></td></tr>
-                            <tr th:if="${reservations == null or #lists.isEmpty(reservations)}"><td>PMJ-0002</td><td>Diskusi Kelompok</td><td>DC-306</td><td>15 Mei 2025</td><td><span class="badge orange">Menunggu</span></td></tr>
+                            <tr th:if="${reservations == null or #lists.isEmpty(reservations)}">
+                                <td colspan="7">Belum ada data reservasi.</td>
+                            </tr>
                         </tbody>
                     </table>
-                </section>
-            </div>
+                </div>
+            </section>
         </main>
     </div>
 </body>

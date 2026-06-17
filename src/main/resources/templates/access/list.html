@@ -1,58 +1,149 @@
 <!DOCTYPE html>
+<!--
+    Penanggung jawab: Tadzkiroh Aziziyah Haqia - 103112400242.
+    Modul: AccessRecord dan AccessControlService.
+-->
 <html lang="id" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akses Ruangan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Akses Ruang</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="app-shell">
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    <div class="app-frame">
         <aside class="sidebar">
-            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
-            <nav class="nav-menu">
-                <a class="nav-item" th:href="@{/satpam/dashboard}">Dashboard</a>
-                <a class="nav-item active" th:href="@{/satpam/akses}">Akses Ruangan</a>
+            <a class="brand" th:href="@{/}">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span><span class="brand-name">Peminjaman Ruang Kelas</span><span class="brand-kicker">Panel Satpam</span></span>
+            </a>
+            <nav aria-label="Navigasi utama">
+                <ul class="nav-list">
+                    <li><a class="nav-link" th:href="@{/satpam/dashboard}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Dashboard</a></li>
+                    <li><a class="nav-link is-active" th:href="@{/satpam/akses}"><span class="nav-icon icon-access" aria-hidden="true"></span>Kelola Akses</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/rooms}"><span class="nav-icon icon-room" aria-hidden="true"></span>Ruang Kelas</a></li>
+                    <li><a class="nav-link" th:href="@{/}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Beranda</a></li>
+                </ul>
             </nav>
-        </aside>
-        <main class="page">
-            <div class="page-inner">
-                <div class="page-title">
-                    <span class="eyebrow">Akses Ruangan</span>
-                    <h1>Check-in dan Check-out</h1>
-                    <p>Kelola penggunaan ruang kelas oleh peminjam.</p>
-                </div>
-                <br>
-                <section class="content-grid">
-                    <div class="card">
-                        <h2>Belum Check-out</h2>
-                        <table>
-                            <thead><tr><th>Record</th><th>Reservasi</th><th>Check-in</th><th>Kendala</th><th>Aksi</th></tr></thead>
-                            <tbody>
-                                <tr th:each="record : ${belumCheckOut}">
-                                    <td th:text="${record.recordId}">ACC-001</td>
-                                    <td th:text="${record.reservationId}">RES-001</td>
-                                    <td th:text="${record.checkInTime}">09:00</td>
-                                    <td th:text="${record.catatanPelanggaran}">-</td>
-                                    <td><form th:action="@{/satpam/akses/{id}/check-out(id=${record.reservationId})}" method="post"><button type="submit">Check-out</button></form></td>
-                                </tr>
-                                <tr th:if="${#lists.isEmpty(belumCheckOut)}"><td colspan="5">Tidak ada record belum check-out.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="card">
-                        <h2>Catat Kendala</h2>
-                        <form th:action="@{/satpam/akses/catat-kendala}" method="post">
-                            <label for="reservationId">ID Reservasi</label>
-                            <input type="text" id="reservationId" name="reservationId" required>
-                            <br><br>
-                            <label for="catatanPelanggaran">Catatan</label>
-                            <textarea id="catatanPelanggaran" name="catatanPelanggaran" required></textarea>
-                            <div class="form-actions"><button type="submit">Simpan</button></div>
-                        </form>
-                    </div>
-                </section>
+            <div class="sidebar-help">
+                <strong>Catat kendala</strong>
+                <p>Pastikan record akses punya ID Satpam agar jejak operasional jelas.</p>
             </div>
+        </aside>
+
+        <main class="app-main" id="main-content">
+            <div class="sukses" th:if="${sukses}" th:text="${sukses}">Pesan sukses</div>
+            <div class="error" th:if="${error}" th:text="${error}">Pesan error</div>
+
+            <section class="page-hero" aria-labelledby="page-title">
+                <div class="page-title-card">
+                    <span class="eyebrow">2. Akses Ruang</span>
+                    <h1 id="page-title">Kelola Akses Ruang</h1>
+                    <p>Konfirmasi check-in, check-out, dan kendala akses ruang dari satu panel operasional.</p>
+                </div>
+            </section>
+
+            <div class="top-actions">
+                <a class="button secondary" th:href="@{/satpam/dashboard}">Dashboard Satpam</a>
+            </div>
+
+            <section class="form-card" aria-labelledby="checkin-title">
+                <h2 id="checkin-title">Check-in</h2>
+                <form th:action="@{/satpam/akses/check-in}" method="post" class="form-grid">
+                    <div class="field">
+                        <label for="satpamIdCheckIn">ID Satpam</label>
+                        <input type="number" id="satpamIdCheckIn" name="satpamId" required>
+                    </div>
+                    <div class="field">
+                        <label for="reservationId">ID Reservasi</label>
+                        <input type="number" id="reservationId" name="reservationId" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit">Check-in</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="table-card" aria-labelledby="checkout-title">
+                <div class="table-card-header">
+                    <h2 id="checkout-title">Belum Check-out</h2>
+                    <span class="pill status-warning">Perlu tindakan</span>
+                </div>
+                <div class="table-shell">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID Record</th>
+                                <th>Reservasi</th>
+                                <th>Satpam</th>
+                                <th>Check-in</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="record : ${belumCheckOut}">
+                                <td th:text="${record.recordId}">ACC001</td>
+                                <td th:text="${record.reservation == null ? '-' : record.reservation.reservationId}">RES001</td>
+                                <td th:text="${record.satpam == null ? '-' : record.satpam.nama}">Satpam</td>
+                                <td th:text="${record.checkInTime}">2026-06-12</td>
+                                <td>
+                                    <div class="action-stack">
+                                        <form class="inline-action compact" th:action="@{/satpam/akses/{id}/check-out(id=${record.recordId})}" method="post">
+                                            <label class="sr-only" th:for="|checkoutSatpam-${record.recordId}|">ID Satpam untuk check-out</label>
+                                            <input type="number" name="satpamId" th:id="|checkoutSatpam-${record.recordId}|" placeholder="ID Satpam" required>
+                                            <button type="submit">Check-out</button>
+                                        </form>
+                                        <form class="inline-action" th:action="@{/satpam/akses/{id}/kendala(id=${record.recordId})}" method="post">
+                                            <label class="sr-only" th:for="|issueSatpam-${record.recordId}|">ID Satpam untuk kendala</label>
+                                            <input type="number" name="satpamId" th:id="|issueSatpam-${record.recordId}|" placeholder="ID Satpam" required>
+                                            <label class="sr-only" th:for="|issueNote-${record.recordId}|">Catatan kendala</label>
+                                            <input type="text" name="catatanPelanggaran" th:id="|issueNote-${record.recordId}|" placeholder="Kendala" required>
+                                            <button class="warning" type="submit">Catat</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${belumCheckOut == null or #lists.isEmpty(belumCheckOut)}">
+                                <td colspan="5">Tidak ada record belum check-out.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="table-card" aria-labelledby="records-title">
+                <div class="table-card-header">
+                    <h2 id="records-title">Semua AccessRecord</h2>
+                    <span class="pill">Log akses</span>
+                </div>
+                <div class="table-shell">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID Record</th>
+                                <th>Reservasi</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Kendala</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="record : ${records}">
+                                <td th:text="${record.recordId}">ACC001</td>
+                                <td th:text="${record.reservation == null ? '-' : record.reservation.reservationId}">RES001</td>
+                                <td th:text="${record.checkInTime}">-</td>
+                                <td th:text="${record.checkOutTime}">-</td>
+                                <td th:text="${record.catatanPelanggaran}">-</td>
+                            </tr>
+                            <tr th:if="${records == null or #lists.isEmpty(records)}">
+                                <td colspan="5">Belum ada access record.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 </body>

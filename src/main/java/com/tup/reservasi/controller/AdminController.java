@@ -1,6 +1,5 @@
 package com.tup.reservasi.controller;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,30 +7,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.tup.reservasi.dto.ApprovalRequest;
-import com.tup.reservasi.dto.ApprovalResponse;
-import com.tup.reservasi.dto.ReservationResponse;
 import com.tup.reservasi.service.ApprovalService;
 
 /*
- * Penanggung jawab: Atha Muyassar.
- *
- * Arahan halaman dari class-diagram:
- * - Controller ini nanti menghubungkan halaman Admin dengan behaviour:
- *   verifikasiReservasi(): boolean
- *   setujuiReservasi(): Approval
- *   tolakReservasi(): Approval
- *   mintaRevisiData(): Approval
- *   receiveNotification()
- * - Data yang perlu dikirim ke view:
- *   profil Admin: unitKerja.
- *   daftar Reservation yang menunggu keputusan.
- *   daftar Approval yang sudah ditinjau Admin.
- *   daftar Notification untuk Admin.
- * - Step 7 mulai menyiapkan route halaman admin.
+ * Penanggung jawab: Atha Muyassar - 103112430185.
+ * Modul: Admin.
  */
-
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
@@ -44,49 +27,62 @@ public class AdminController {
 
     @GetMapping
     public String adminHome() {
+        return "redirect:/admin/dashboard";
+    }
+
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        model.addAttribute("pendingReservations", this.approvalService.getPendingReservations());
+        model.addAttribute("approvals", this.approvalService.getAllApprovals());
         return "admin/dashboard";
     }
 
     @GetMapping("/approvals")
     public String approvalList(Model model) {
-        model.addAttribute("pendingReservations", approvalService.getPendingReservations()
-                .stream()
-                .map(ReservationResponse::from)
-                .toList());
-        model.addAttribute("approvals", approvalService.getApprovalHistory()
-                .stream()
-                .map(ApprovalResponse::from)
-                .toList());
+        model.addAttribute("pendingReservations", this.approvalService.getPendingReservations());
+        model.addAttribute("approvals", this.approvalService.getAllApprovals());
         return "approvals/list";
     }
 
     @PostMapping("/approvals/{reservationId}/approve")
-    public String approveReservation(@PathVariable String reservationId,
+    public String approveReservation(@PathVariable Long reservationId,
+            @RequestParam Long adminId,
             @RequestParam(required = false) String catatan,
-            Authentication authentication) {
-        approvalService.approveReservation(reservationId, authentication.getName(), request(catatan));
+            RedirectAttributes redirectAttrs) {
+        try {
+            this.approvalService.approveReservation(adminId, reservationId, catatan);
+            redirectAttrs.addFlashAttribute("sukses", "Reservasi disetujui");
+        } catch (RuntimeException e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/admin/approvals";
     }
 
     @PostMapping("/approvals/{reservationId}/reject")
-    public String rejectReservation(@PathVariable String reservationId,
+    public String rejectReservation(@PathVariable Long reservationId,
+            @RequestParam Long adminId,
             @RequestParam(required = false) String catatan,
-            Authentication authentication) {
-        approvalService.rejectReservation(reservationId, authentication.getName(), request(catatan));
+            RedirectAttributes redirectAttrs) {
+        try {
+            this.approvalService.rejectReservation(adminId, reservationId, catatan);
+            redirectAttrs.addFlashAttribute("sukses", "Reservasi ditolak");
+        } catch (RuntimeException e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/admin/approvals";
     }
 
     @PostMapping("/approvals/{reservationId}/revision")
-    public String requestRevision(@PathVariable String reservationId,
+    public String requestRevision(@PathVariable Long reservationId,
+            @RequestParam Long adminId,
             @RequestParam(required = false) String catatan,
-            Authentication authentication) {
-        approvalService.requestRevision(reservationId, authentication.getName(), request(catatan));
+            RedirectAttributes redirectAttrs) {
+        try {
+            this.approvalService.requestRevision(adminId, reservationId, catatan);
+            redirectAttrs.addFlashAttribute("sukses", "Reservasi diminta revisi");
+        } catch (RuntimeException e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/admin/approvals";
-    }
-
-    private ApprovalRequest request(String catatan) {
-        ApprovalRequest request = new ApprovalRequest();
-        request.setCatatan(catatan);
-        return request;
     }
 }

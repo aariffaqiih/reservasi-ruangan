@@ -1,28 +1,27 @@
 package com.tup.reservasi.controller.rest;
 
-/* ---------------------------------------------------------------
- * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
- *
- * REST controller untuk entitas Room. Menyajikan endpoint CRUD serta
- * operasi aktivasi/non‑aktivasi. Semua logika bisnis didelegasikan ke
- * {@link com.tup.reservasi.service.RoomService}.
- * --------------------------------------------------------------- */
+import java.util.List;
 
-import com.tup.reservasi.dto.RoomRequest;
-import com.tup.reservasi.dto.RoomResponse;
-import com.tup.reservasi.dto.RoomStatusRequest;
-import com.tup.reservasi.entity.Room;
-import com.tup.reservasi.service.RoomService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.tup.reservasi.entity.Room;
+import com.tup.reservasi.service.RoomService;
 
-import jakarta.validation.Valid;
-
+/*
+ * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar - 103112400213.
+ * Modul: Room.
+ */
 @RestController
 @RequestMapping("/api/rooms")
 public class RoomRestController {
@@ -33,83 +32,57 @@ public class RoomRestController {
         this.roomService = roomService;
     }
 
-    // ---------------------------------------------------------------------
-    // CREATE
-    @PostMapping
-    public ResponseEntity<RoomResponse> createRoom(@Valid @RequestBody RoomRequest request) {
-        Room room = toEntity(request);
-        Room saved = roomService.createRoom(room);
-        return new ResponseEntity<>(toResponse(saved), HttpStatus.CREATED);
-    }
-
-    // ---------------------------------------------------------------------
-    // READ – all rooms
     @GetMapping
-    public ResponseEntity<List<RoomResponse>> getAllRooms() {
-        List<RoomResponse> rooms = roomService.getAllRooms()
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(rooms);
+    public ResponseEntity<List<Room>> getAllRooms() {
+        return ResponseEntity.ok(this.roomService.getAllRooms());
     }
 
-    // READ – single room by ID
     @GetMapping("/{roomId}")
-    public ResponseEntity<RoomResponse> getRoom(@PathVariable String roomId) {
-        Optional<Room> opt = roomService.getRoomById(roomId);
-        return opt.map(room -> ResponseEntity.ok(toResponse(room)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // ---------------------------------------------------------------------
-    // UPDATE – full replacement
-    @PutMapping("/{roomId}")
-    public ResponseEntity<RoomResponse> updateRoom(@PathVariable String roomId,
-                                                   @Valid @RequestBody RoomRequest request) {
-        // Ensure the entity has the correct ID
-        Room updated = toEntity(request);
-        updated.setRoomId(roomId);
-        Room saved = roomService.updateRoom(updated);
-        return ResponseEntity.ok(toResponse(saved));
-    }
-
-    // ---------------------------------------------------------------------
-    // DELETE
-    @DeleteMapping("/{roomId}")
-    public ResponseEntity<Void> deleteRoom(@PathVariable String roomId) {
-        roomService.deleteRoom(roomId);
-        return ResponseEntity.noContent().build();
-    }
-
-    // ---------------------------------------------------------------------
-    // ACTIVATE / DEACTIVATE via status request
-    @PatchMapping("/{roomId}/status")
-    public ResponseEntity<Void> changeStatus(@PathVariable String roomId,
-                                            @RequestBody RoomStatusRequest request) {
-        if (request.isStatusAktif()) {
-            roomService.activateRoom(roomId);
-        } else {
-            roomService.deactivateRoom(roomId);
+    public ResponseEntity<Room> getRoomById(@PathVariable Long roomId) {
+        try {
+            return ResponseEntity.ok(this.roomService.getRoomById(roomId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok().build();
     }
 
-    // ---------------------------------------------------------------------
-    // Utility conversion methods
-    private Room toEntity(RoomRequest request) {
-        return new Room(null,
-                request.getNamaRuang(),
-                request.getGedung(),
-                request.getKapasitas(),
-                request.isStatusAktif());
+    @GetMapping("/gedung/{gedung}")
+    public ResponseEntity<List<Room>> getRoomsByGedung(@PathVariable String gedung) {
+        return ResponseEntity.ok(this.roomService.getRoomsByGedung(gedung));
     }
 
-    private RoomResponse toResponse(Room room) {
-        return new RoomResponse(room.getRoomId(),
-                room.getNamaRuang(),
-                room.getGedung(),
-                room.getKapasitas(),
-                room.isStatusAktif(),
-                room.getInfoRuang());
+    @GetMapping("/kapasitas")
+    public ResponseEntity<List<Room>> getRoomsByKapasitasMinimal(@RequestParam int minimal) {
+        return ResponseEntity.ok(this.roomService.getRoomsByKapasitasMinimal(minimal));
+    }
+
+    @PostMapping
+    public ResponseEntity<Room> createRoom(@RequestBody Room room) {
+        Room roomCreated = this.roomService.createRoom(room);
+        return ResponseEntity.status(HttpStatus.CREATED).body(roomCreated);
+    }
+
+    @PutMapping("/{roomId}")
+    public ResponseEntity<Room> updateRoom(@PathVariable Long roomId, @RequestBody Room room) {
+        try {
+            return ResponseEntity.ok(this.roomService.updateRoom(roomId, room));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/{roomId}/status")
+    public ResponseEntity<Room> updateRoomStatus(@PathVariable Long roomId,
+            @RequestParam boolean statusAktif) {
+        try {
+            return ResponseEntity.ok(this.roomService.updateRoomStatus(roomId, statusAktif));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<Void> deleteRoom(@PathVariable Long roomId) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).build();
     }
 }

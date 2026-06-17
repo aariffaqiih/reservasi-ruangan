@@ -1,46 +1,88 @@
 <!DOCTYPE html>
+<!--
+    Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar - 103112400213.
+    Modul: Room.
+-->
 <html lang="id" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruang Kelas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Daftar Ruang</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="app-shell">
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    <div class="app-frame">
         <aside class="sidebar">
-            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
-            <nav class="nav-menu">
-                <a class="nav-item" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
-                <a class="nav-item" th:href="@{/api/reservations}">Peminjaman</a>
-                <a class="nav-item active" th:href="@{/api/rooms}">Ruang Kelas</a>
+            <a class="brand" th:href="@{/}">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span><span class="brand-name">Peminjaman Ruang Kelas</span><span class="brand-kicker">Katalog Ruang</span></span>
+            </a>
+            <nav aria-label="Navigasi utama">
+                <ul class="nav-list">
+                    <li><a class="nav-link" th:href="@{/mahasiswa/dashboard}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Dashboard</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/reservations/form}"><span class="nav-icon icon-reservation" aria-hidden="true"></span>Peminjaman</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/reservations}"><span class="nav-icon icon-approval" aria-hidden="true"></span>Riwayat</a></li>
+                    <li><a class="nav-link is-active" th:href="@{/mahasiswa/rooms}"><span class="nav-icon icon-room" aria-hidden="true"></span>Ruang Kelas</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/notifications}"><span class="nav-icon icon-notification" aria-hidden="true"></span>Notifikasi</a></li>
+                </ul>
             </nav>
+            <div class="sidebar-help">
+                <strong>Pilih ruang</strong>
+                <p>Cek kapasitas dan status sebelum mengajukan reservasi baru.</p>
+            </div>
         </aside>
-        <main class="page">
-            <div class="page-inner">
-                <div class="topbar">
-                    <div class="page-title"><span class="eyebrow">4. Ruang Kelas</span><h1>Ruang Kelas</h1><p>Pilih ruang kelas yang tersedia untuk kegiatan Anda.</p></div>
-                    <input class="search" type="search" placeholder="Cari kode ruang...">
+
+        <main class="app-main" id="main-content">
+            <section class="page-hero" aria-labelledby="page-title">
+                <div class="page-title-card">
+                    <span class="eyebrow">4. Ruang Kelas</span>
+                    <h1 id="page-title">Daftar Ruang</h1>
+                    <p>Data ruang yang tersimpan di database, termasuk gedung, kapasitas, dan status aktif.</p>
                 </div>
-                <section class="card">
-                    <div class="tabs"><span class="tab active">Semua Gedung</span><span class="tab">REK</span><span class="tab">DC</span><span class="tab">HOT</span><span class="tab">DSP</span></div>
+            </section>
+
+            <div class="top-actions">
+                <a class="button secondary" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
+                <a class="button" th:href="@{/mahasiswa/reservations/form}">Ajukan Reservasi</a>
+            </div>
+
+            <section class="table-card" aria-labelledby="room-table-title">
+                <div class="table-card-header">
+                    <h2 id="room-table-title">Katalog Ruang Kelas</h2>
+                    <span class="pill">Semua Gedung</span>
+                </div>
+                <div class="table-shell">
                     <table>
-                        <thead><tr><th>Kode</th><th>Gedung</th><th>Kapasitas</th><th>Fasilitas</th><th>Status</th><th>Detail</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nama Ruang</th>
+                                <th>Gedung</th>
+                                <th>Kapasitas</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <tr th:each="room : ${rooms}">
-                                <td th:text="${room.roomId}">REK-201</td>
-                                <td th:text="${room.gedung}">REK</td>
-                                <td th:text="${room.kapasitas}">40</td>
-                                <td th:text="${room.infoRuang}">LCD, AC, Whiteboard</td>
-                                <td><span class="badge green" th:text="${room.statusAktif}">Tersedia</span></td>
-                                <td><a class="badge pink" href="#">Detail</a></td>
+                                <td th:text="${room.roomId}">R001</td>
+                                <td th:text="${room.namaRuang}">Ruang A</td>
+                                <td th:text="${room.gedung}">Gedung 1</td>
+                                <td><span th:text="${room.kapasitas}">30</span> orang</td>
+                                <td>
+                                    <span class="status-badge"
+                                          th:classappend="${room.statusAktif ? ' status-success' : ' status-danger'}"
+                                          th:text="${room.statusAktif ? 'Aktif' : 'Nonaktif'}">Aktif</span>
+                                </td>
                             </tr>
-                            <tr th:if="${rooms == null or #lists.isEmpty(rooms)}"><td>REK-201</td><td>REK</td><td>40</td><td>LCD, AC, Whiteboard</td><td><span class="badge green">Tersedia</span></td><td><a class="badge pink" href="#">Detail</a></td></tr>
-                            <tr th:if="${rooms == null or #lists.isEmpty(rooms)}"><td>DC-306</td><td>DC</td><td>35</td><td>LCD, AC, Proyektor</td><td><span class="badge green">Tersedia</span></td><td><a class="badge pink" href="#">Detail</a></td></tr>
+                            <tr th:if="${rooms == null or #lists.isEmpty(rooms)}">
+                                <td colspan="5">Belum ada data ruang.</td>
+                            </tr>
                         </tbody>
                     </table>
-                </section>
-            </div>
+                </div>
+            </section>
         </main>
     </div>
 </body>

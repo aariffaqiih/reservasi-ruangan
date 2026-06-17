@@ -1,36 +1,30 @@
 package com.tup.reservasi.repository;
 
-/*
- * Penanggung jawab: Tadzkiroh Aziziyah Haqia.
- *
- * Arahan repository:
- * - Siapkan akses data untuk AccessRecord.
- * - Field pencarian utama:
- *   recordId, reservation, satpam, checkInTime, checkOutTime, catatanPelanggaran.
- * - Query yang kemungkinan dibutuhkan:
- *   cari AccessRecord berdasarkan Reservation.
- *   daftar AccessRecord berdasarkan Satpam.
- *   daftar AccessRecord yang belum check-out.
- *   daftar catatan kendala/pelanggaran.
- */
-
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import com.tup.reservasi.entity.AccessRecord;
 
-public interface AccessRecordRepository extends JpaRepository<AccessRecord, String> {
+/*
+ * Penanggung jawab: Tadzkiroh Aziziyah Haqia - 103112400242.
+ * Modul: AccessRecord dan AccessControlService.
+ */
+@Repository
+public interface AccessRecordRepository extends JpaRepository<AccessRecord, Long> {
 
-    Optional<AccessRecord> findByReservationId(String reservationId);
+    Optional<AccessRecord> findByReservation_ReservationId(Long reservationId);
 
-    List<AccessRecord> findBySatpamId(String satpamId);
+    @Modifying
+    @Query("DELETE FROM AccessRecord a WHERE a.reservation.reservationId = :reservationId")
+    void deleteByReservationId(@Param("reservationId") Long reservationId);
 
-    @Query("SELECT r FROM AccessRecord r WHERE r.checkOutTime IS NULL")
-    List<AccessRecord> findBelumCheckOut();
+    List<AccessRecord> findBySatpam_Id(Long satpamId);
 
-    @Query("SELECT r FROM AccessRecord r WHERE r.catatanPelanggaran IS NOT NULL")
-    List<AccessRecord> findWithKendala();
+    List<AccessRecord> findByCheckOutTimeIsNull();
 }

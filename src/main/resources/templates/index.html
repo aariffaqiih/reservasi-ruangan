@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Sistem Reservasi Ruang</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    <div class="portal-frame">
+      <main class="portal-hero" id="main-content">
+        <section class="portal-card" aria-labelledby="portal-title">
+          <div class="portal-brand">
+            <span class="hero-mark" aria-hidden="true"></span>
+            <div>
+              <span class="eyebrow">Classroom Booking System</span>
+              <h1 id="portal-title">Sistem Reservasi Ruang</h1>
+            </div>
+          </div>
+          <p class="lead">
+            Pilih panel kerja untuk memesan ruang kelas, memeriksa approval,
+            atau mengelola akses ruang dengan tampilan yang rapi dan mudah
+            dipindai.
+          </p>
+
+          <div class="role-grid" aria-label="Menu utama aplikasi">
+            <a class="role-card" th:href="@{/mahasiswa/dashboard}">
+              <span
+                class="stat-icon icon-reservation"
+                aria-hidden="true"
+              ></span>
+              <strong>Mahasiswa</strong>
+              <span
+                >Ajukan reservasi, cek status, lihat ruang, dan baca
+                notifikasi.</span
+              >
+            </a>
+            <a class="role-card" th:href="@{/admin/dashboard}">
+              <span class="stat-icon icon-approval" aria-hidden="true"></span>
+              <strong>Admin</strong>
+              <span
+                >Tinjau permintaan, beri keputusan, dan pantau riwayat
+                approval.</span
+              >
+            </a>
+            <a class="role-card" th:href="@{/satpam/dashboard}">
+              <span class="stat-icon icon-access" aria-hidden="true"></span>
+              <strong>Satpam</strong>
+              <span
+                >Konfirmasi check-in, check-out, dan catat kendala akses.</span
+              >
+            </a>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

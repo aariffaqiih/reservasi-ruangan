@@ -1,586 +1,221 @@
-# BLUEPRINT SISTEM RESERVASI RUANG KAMPUS
 
-## Versi Revisi
 
-**Judul sistem:** Sistem Pengelolaan Reservasi Ruang Kelas Kampus di Luar Jam Perkuliahan
+1. **`User` = abstract class**
+   Benar, karena menjadi induk bersama untuk `Mahasiswa`, `Admin`, dan `Satpam`.
 
-**Basis aplikasi:** Java, Spring Boot MVC, Thymeleaf, Spring Security, Spring Data JPA
+2. **`Notifiable` = interface**
+   Benar, karena hanya mendefinisikan kemampuan menerima notifikasi.
 
-**Target database revisi:** MySQL Server, dikelola melalui phpMyAdmin
+3. **Override yang wajib**
+   Yang paling masuk akal adalah `receiveNotification(notification)` pada:
 
-**Tanggal audit blueprint:** 2 Juni 2026
+   * `Mahasiswa`
+   * `Admin`
+   * `Satpam`
 
----
+4. **`Notification` harus punya penerima**
+   Tanpa atribut penerima, relasi notifikasi belum lengkap. Jadi perlu ada:
 
-## Status Starter Aktual Setelah Audit
+   * `penerima: Notifiable`
 
-Dokumen ini tetap menjadi acuan target arsitektur final. Beberapa bagian historis di
-bagian audit menjelaskan kondisi source code sebelum starter kelompok dirapikan.
+5. **`Reservation`, `Approval`, `AccessRecord` perlu menyimpan relasi objek**
+   Supaya diagramnya utuh, masing-masing sebaiknya menyimpan referensi ke objek terkait.
 
-Kondisi starter yang berlaku sekarang:
-
-* database utama sudah menggunakan MariaDB/MySQL `reservasi_ruang`,
-* phpMyAdmin dipakai sebagai alat administrasi database,
-* schema database dibuat dan disesuaikan oleh JPA/Hibernate (`ddl-auto=update`),
-* H2 hanya dipertahankan untuk test in-memory dengan mode kompatibilitas MySQL,
-* login database dan pembatasan akses tiga role sudah aktif,
-* fitur bisnis final masih berupa placeholder berkomentar agar dikerjakan anggota,
-* template role-specific berada di folder `templates/mahasiswa`, `templates/admin`,
-  dan `templates/satpam`,
-* template bersama berada di `templates/login.html`, `templates/error.html`, dan
-  folder `templates/fragments`.
-
-Jika ada perbedaan istilah atau path dengan catatan audit historis, gunakan status
-starter aktual ini bersama `DEVELOPMENT_MAP.md`.
+6. **Komposisi tidak wajib dipakai di model inti ini**
+   Untuk kasus Anda, **asosiasi** dan **agregasi** sudah lebih tepat daripada komposisi, karena data riwayat biasanya tetap disimpan walau status berubah.
 
 ---
 
-## 1. Tujuan Dokumen
+# Spesifikasi kelas per kelas
 
-Dokumen ini adalah blueprint terbaru yang disusun berdasarkan:
+## 1) `User` *(abstract class)*
 
-1. hasil audit terhadap source code aplikasi saat ini,
-2. perbandingan dengan blueprint versi sebelumnya,
-3. pemetaan terhadap materi perkuliahan Java dan Object-Oriented Programming (OOP),
-4. revisi pemilihan database dari H2 file database menjadi MySQL Server yang dikelola melalui phpMyAdmin.
-
-Blueprint ini membedakan dua kondisi:
-
-* **IMPLEMENTED**: sudah ada dan berjalan pada source code saat ini.
-* **TARGET-MIGRATION**: keputusan desain baru yang harus diterapkan pada source code agar aplikasi memakai MySQL.
-
-Catatan penting:
-
-* MySQL adalah database management system (DBMS) yang menyimpan data aplikasi.
-* phpMyAdmin adalah antarmuka web untuk membuat database, mengimpor SQL, melihat tabel, dan mengelola data MySQL.
-* Aplikasi Java terhubung langsung ke MySQL melalui JDBC. Aplikasi Java tidak terhubung ke phpMyAdmin.
-
----
-
-## 2. Latar Belakang Masalah
-
-Mahasiswa sering membutuhkan ruang kelas kampus untuk kegiatan akademik di luar jam perkuliahan, misalnya diskusi kelompok, rapat kepanitiaan, persiapan presentasi, pelatihan, atau bimbingan.
-
-Jika proses reservasi dilakukan secara manual atau informal, masalah yang dapat muncul adalah:
-
-* jadwal penggunaan ruang bentrok,
-* pemohon tidak tercatat dengan jelas,
-* persetujuan admin tidak terdokumentasi,
-* penggunaan ruang tidak terpantau,
-* check-in dan check-out tidak tercatat,
-* kendala atau pelanggaran sulit ditelusuri,
-* riwayat reservasi tidak tersimpan dengan rapi.
-
-Sistem ini dirancang untuk menangani proses tersebut dalam satu alur bisnis terintegrasi.
-
----
-
-## 3. Fokus dan Batasan Sistem
-
-### 3.1 Fokus sistem
-
-Sistem menangani:
-
-* login berdasarkan peran,
-* pengajuan reservasi ruang oleh mahasiswa,
-* validasi data pemohon,
-* validasi waktu di luar jam perkuliahan,
-* pengecekan bentrok jadwal,
-* proses approval oleh admin,
-* check-in dan check-out oleh satpam,
-* pencatatan kendala oleh satpam,
-* pembatalan reservasi oleh mahasiswa,
-* status dan riwayat reservasi,
-* notifikasi otomatis,
-* penyimpanan data relasional melalui Spring Data JPA repository.
-
-### 3.2 Batasan domain
-
-Sistem dibatasi hanya untuk:
-
-* ruang kelas atau ruang kampus yang dapat dipesan,
-* penggunaan ruang di luar jam perkuliahan,
-* mahasiswa sebagai pemohon,
-* admin akademik atau sarpras sebagai pemeriksa,
-* satpam sebagai pencatat penggunaan ruang.
-
-Sistem tidak membahas:
-
-* pembayaran,
-* inventaris barang secara detail,
-* peminjaman barang,
-* sistem akademik umum,
-* sinkronisasi jadwal kuliah eksternal,
-* approval tambahan dari dosen pembina,
-* pengelolaan fasilitas non-ruang secara rinci.
-
----
-
-## 4. Ringkasan Audit Blueprint Lama terhadap Code Terkini
-
-### 4.1 Bagian blueprint lama yang sudah sesuai
-
-| Area | Hasil audit code terkini |
-| --- | --- |
-| Aktor utama | Sesuai: `Mahasiswa`, `Admin`, dan `Satpam`. |
-| Domain utama | Sesuai: `User`, `Mahasiswa`, `Admin`, `Satpam`, `Room`, `Reservation`, `Approval`, `AccessRecord`, dan `Notification`. |
-| Abstract class | Sesuai: `User` adalah `abstract class`. |
-| Interface | Sesuai: `Notifiable` dipakai sebagai kontrak penerima notifikasi. |
-| Inheritance | Sesuai: tiga kelas peran memakai `extends User`. |
-| Status reservasi | Sesuai: `DRAFT`, `PENDING`, `APPROVED`, `REJECTED`, `ACTIVE`, `COMPLETED`, dan `CANCELLED`. |
-| Approval | Sesuai: keputusan approval dipisahkan dari status proses reservasi. |
-| Service layer | Sesuai dan sudah aktif: reservasi, approval, access control, notifikasi, user, dan autentikasi. |
-| Repository layer | Sudah lebih lengkap: seluruh data operasional memakai Spring Data JPA repository. |
-| Validasi transisi status | Sudah diterapkan pada `Reservation.ubahStatus(...)`. |
-| Riwayat dan notifikasi | Sudah disimpan ke database melalui repository. |
-
-### 4.2 Bagian blueprint lama yang perlu diperbarui
-
-| Blueprint lama | Kondisi code terkini | Revisi blueprint baru |
-| --- | --- | --- |
-| `User` memiliki `login()` dan `logout()` | Autentikasi tidak lagi menjadi tanggung jawab entity `User`. Login ditangani Spring Security, `SecurityConfig`, `AuthSession`, dan service autentikasi. | Hapus `login()` dan `logout()` dari entity `User`. Catat autentikasi sebagai concern layer security. |
-| `User` belum mencantumkan perilaku polymorphic | `User` memiliki abstract method `getRole()` dan `getDashboardPath()`. | Tambahkan dua abstract method tersebut sebagai bukti abstraction dan dynamic polymorphism. |
-| `Reservation` belum lengkap | Code memiliki `alasanPembatalan`, `restore(...)`, `overlaps(...)`, `addNotification(...)`, dan link association internal. | Tambahkan atribut dan method aktual. |
-| `Notification` terlalu sederhana | Code menyimpan `penerimaId`, `penerimaNama`, pesan, status baca, dan waktu pembuatan. | Perbarui atribut notifikasi. |
-| Hanya empat service utama | Code juga memiliki `UserService` dan `AuthService`. | Tambahkan service tersebut. |
-| Controller belum dipetakan | Code memiliki controller MVC web dan REST API. | Tambahkan arsitektur presentation layer dan daftar endpoint. |
-| Keamanan belum dipetakan | Code memakai Spring Security, BCrypt, role authorization, CSRF, session fixation protection, dan pembatasan akses data mahasiswa. | Tambahkan bagian keamanan. |
-| Database aktual disebut H2 | Code memang masih memakai H2 file database dan H2 memory untuk test. | Tetapkan MySQL Server + phpMyAdmin sebagai target migrasi dan catat gap implementasi. |
-
-### 4.3 Kesimpulan perbandingan
-
-Implementasi aplikasi saat ini sudah berkembang dari rancangan domain menjadi aplikasi Spring Boot MVC yang dapat dijalankan. Alur utama telah bekerja dari pengajuan hingga check-out. Blueprint baru harus menjadi dokumentasi arsitektur aktual sekaligus acuan migrasi database MySQL.
-
----
-
-## 5. Aktor Sistem
-
-### 5.1 Mahasiswa
-
-Mahasiswa dapat:
-
-* login,
-* melihat dashboard mahasiswa,
-* melihat ruang,
-* mengajukan reservasi,
-* melihat status dan riwayat reservasi miliknya,
-* membatalkan reservasi miliknya jika status masih mengizinkan,
-* melihat notifikasi,
-* menandai notifikasi sebagai sudah dibaca.
-
-### 5.2 Admin Akademik atau Sarpras
-
-Admin dapat:
-
-* login,
-* melihat dashboard admin,
-* melihat reservasi berstatus `PENDING`,
-* memverifikasi reservasi,
-* menyetujui reservasi,
-* menolak reservasi,
-* meminta revisi data,
-* melihat riwayat approval,
-* mengelola status aktif ruang melalui API,
-* melihat riwayat reservasi.
-
-### 5.3 Satpam
-
-Satpam dapat:
-
-* login,
-* melihat dashboard satpam,
-* melihat reservasi yang dapat diproses,
-* mencatat check-in untuk reservasi `APPROVED`,
-* mencatat check-out,
-* mencatat kendala atau pelanggaran,
-* melihat access record.
-
-### 5.4 Sistem bukan aktor
-
-Sistem tidak digambar sebagai aktor pada use case diagram. Sistem adalah boundary yang menjalankan aturan bisnis, penyimpanan data, autentikasi, dan notifikasi.
-
----
-
-## 6. Use Case Utama
-
-### UC-01 Login Pengguna
-
-**Aktor:** Mahasiswa, Admin, Satpam
-
-**Tujuan:** Memastikan pengguna masuk ke dashboard sesuai peran.
-
-**Alur ringkas:**
-
-1. Pengguna mengisi username dan password.
-2. Spring Security membaca user dari database.
-3. Password diverifikasi menggunakan BCrypt.
-4. Sistem menyimpan identitas dan role ke session.
-5. Sistem mengarahkan pengguna ke dashboard polymorphic berdasarkan `getDashboardPath()`.
-
-### UC-02 Ajukan Reservasi Ruang
-
-**Aktor:** Mahasiswa
-
-**Include:**
-
-* validasi data pemohon,
-* validasi ruang aktif,
-* validasi tanggal,
-* validasi jam mulai dan jam selesai,
-* validasi penggunaan di luar jam perkuliahan,
-* cek bentrok jadwal.
-
-**Hasil:** Reservasi baru tersimpan dengan status `PENDING` dan notifikasi dibuat.
-
-### UC-03 Proses Approval Reservasi
-
-**Aktor:** Admin
-
-**Include:**
-
-* verifikasi reservasi,
-* cek status `PENDING`,
-* cek ruang aktif,
-* cek ketersediaan ruang,
-* cek bahwa reservasi belum memiliki keputusan approval.
-
-**Extend:**
-
-* setujui reservasi,
-* tolak reservasi,
-* minta revisi data.
-
-### UC-04 Kelola Penggunaan Ruang
-
-**Aktor:** Satpam
-
-**Include:**
-
-* konfirmasi check-in,
-* konfirmasi check-out.
-
-**Extend:**
-
-* catat kendala atau pelanggaran.
-
-### UC-05 Batalkan Reservasi
-
-**Aktor:** Mahasiswa
-
-**Aturan:** Mahasiswa hanya dapat membatalkan reservasi miliknya sendiri pada status `DRAFT`, `PENDING`, atau `APPROVED`.
-
-### UC-06 Lihat Status dan Riwayat
-
-**Aktor:** Mahasiswa, Admin, Satpam
-
-**Aturan akses:**
-
-* mahasiswa hanya melihat reservasi miliknya,
-* admin dan satpam dapat melihat data yang dibutuhkan sesuai fitur,
-* notifikasi hanya dapat ditandai dibaca oleh penerimanya.
-
----
-
-## 7. Alur Bisnis Utama
-
-```text
-Login
-  -> Mahasiswa mengajukan reservasi
-  -> Sistem memvalidasi data dan ketersediaan ruang
-  -> Status PENDING
-  -> Admin memverifikasi
-      -> APPROVED
-          -> Satpam check-in
-          -> Status ACTIVE
-          -> Satpam dapat mencatat kendala
-          -> Satpam check-out
-          -> Status COMPLETED
-      -> REJECTED
-      -> REVISION_REQUESTED pada approval
-          -> Status reservasi disimpan sebagai REJECTED
-          -> Mahasiswa membuat pengajuan baru setelah revisi
-  -> Mahasiswa dapat membatalkan sebelum penggunaan aktif
-  -> Status CANCELLED
-```
-
----
-
-## 8. Aturan Bisnis Aktual
-
-### 8.1 Aturan pengajuan reservasi
-
-* Pemohon wajib merupakan `Mahasiswa`.
-* Nama dan NIM mahasiswa wajib terisi.
-* Ruang wajib ada dan berstatus aktif.
-* Tujuan reservasi wajib terisi.
-* Tanggal reservasi tidak boleh kosong atau berada di masa lalu.
-* Jam mulai wajib lebih awal daripada jam selesai.
-* Pada hari kerja, reservasi hanya boleh dilakukan di luar jam kuliah `07:00-17:00`.
-* Pada Sabtu dan Minggu, reservasi diperbolehkan tanpa batas jam kuliah tersebut.
-* Jadwal tidak boleh bentrok dengan reservasi lain yang berstatus `PENDING`, `APPROVED`, atau `ACTIVE`.
-
-### 8.2 Aturan approval
-
-* Approval hanya boleh diproses dari status `PENDING`.
-* Reservasi hanya dapat memiliki satu keputusan approval.
-* Admin dapat memilih `APPROVED`, `REJECTED`, atau `REVISION_REQUESTED`.
-* Keputusan `REVISION_REQUESTED` disimpan pada tabel approval, sedangkan status reservasi menjadi `REJECTED`.
-* Versi aplikasi saat ini belum menyediakan edit dan resubmit pada reservasi lama.
-
-### 8.3 Aturan akses ruang
-
-* Check-in hanya boleh dilakukan pada reservasi `APPROVED`.
-* Satu reservasi hanya dapat memiliki satu access record.
-* Reservasi yang sudah check-in tidak boleh check-in ulang.
-* Check-in mengubah status menjadi `ACTIVE`.
-* Check-out mengubah status menjadi `COMPLETED`.
-* Deskripsi kendala wajib terisi jika satpam membuat laporan.
-
-### 8.4 Aturan pembatalan
-
-* Mahasiswa hanya boleh membatalkan reservasi miliknya.
-* Pembatalan diperbolehkan pada `DRAFT`, `PENDING`, atau `APPROVED`.
-* Pembatalan ditolak pada `ACTIVE`, `COMPLETED`, `REJECTED`, atau `CANCELLED`.
-
-### 8.5 Aturan notifikasi
-
-Notifikasi dibuat pada perubahan penting, termasuk:
-
-* reservasi diajukan,
-* reservasi disetujui,
-* reservasi ditolak,
-* reservasi perlu direvisi,
-* reservasi dibatalkan,
-* check-in selesai,
-* check-out selesai,
-* kendala ruang dicatat.
-
----
-
-## 9. Struktur Status
-
-### 9.1 Enum `ReservationStatus`
-
-* `DRAFT`
-* `PENDING`
-* `APPROVED`
-* `REJECTED`
-* `ACTIVE`
-* `COMPLETED`
-* `CANCELLED`
-
-### 9.2 Transisi status yang valid
-
-```text
-DRAFT     -> PENDING
-DRAFT     -> CANCELLED
-PENDING   -> APPROVED
-PENDING   -> REJECTED
-PENDING   -> CANCELLED
-APPROVED  -> ACTIVE
-APPROVED  -> CANCELLED
-ACTIVE    -> COMPLETED
-```
-
-### 9.3 Enum `ApprovalDecision`
-
-* `APPROVED`
-* `REJECTED`
-* `REVISION_REQUESTED`
-
-### 9.4 Enum `UserRole`
-
-* `MAHASISWA`
-* `ADMIN`
-* `SATPAM`
-
----
-
-## 10. Arsitektur Aplikasi Aktual
-
-### 10.1 Presentation layer
-
-Presentation layer menerima interaksi pengguna dan meneruskan proses ke service.
-
-**MVC web controller:**
-
-* `AuthPageController`
-* `MahasiswaPageController`
-* `AdminPageController`
-* `SatpamPageController`
-* `RoomPageController`
-* `ReservationHistoryPageController`
-* `NotificationPageController`
-* `GlobalModelAttributes`
-
-**REST API controller:**
-
-* `UserRestController`
-* `AdminRestController`
-* `SatpamRestController`
-* `RoomRestController`
-* `ReservationRestController`
-* `ApprovalRestController`
-* `AccessRestController`
-* `NotificationRestController`
-
-### 10.2 Service layer
-
-Service layer menangani aturan bisnis dan koordinasi transaksi:
-
-* `UserService`
-* `AuthService`
-* `ReservationService`
-* `ApprovalService`
-* `AccessControlService`
-* `NotificationService`
-
-Catatan: `AuthService` tersedia sebagai service autentikasi, tetapi form login web aktif diproses oleh Spring Security melalui `SecurityConfig` dan `UserService`.
-
-### 10.3 Repository layer
-
-Repository layer menangani akses database melalui Spring Data JPA `JpaRepository`:
-
-* `UserRepository`
-* `RoomRepository`
-* `ReservationRepository`
-* `ApprovalRepository`
-* `AccessRecordRepository`
-* `NotificationRepository`
-
-### 10.4 Domain layer
-
-Domain layer berisi entity, abstract class, interface, dan enum:
-
-* `User`
-* `Mahasiswa`
-* `Admin`
-* `Satpam`
-* `Room`
-* `Reservation`
-* `Approval`
-* `AccessRecord`
-* `Notification`
-* `Notifiable`
-* `ReservationStatus`
-* `ApprovalDecision`
-* `UserRole`
-
-### 10.5 Supporting layer
-
-* `SecurityConfig`
-* `AuthSession`
-* `AuthenticatedUser`
-* `ReservationException`
-* `GlobalExceptionHandler`
-* `IdGenerator`
-
----
-
-## 11. Class Diagram Tekstual Aktual
-
-### 11.1 `User` sebagai abstract class
-
-**Peran:** Generalisasi semua pengguna.
-
+**Jenis:** abstract class
 **Atribut:**
 
-* `- id: String`
+* `- id: Long`
 * `- nama: String`
 * `- email: String`
 * `- noHp: String`
 * `- passwordHash: String`
-* `- receivedNotifications: List<Notification>`
+
+**Relasi:**
+
+* **is a** → parent dari `Mahasiswa`, `Admin`, `Satpam`
+* **UML:** generalization / inheritance
+
+**Override:**
+
+* tidak ada di `User`
+* bisa menjadi dasar override pada subclass
 
 **Method:**
 
+* `+ login(email: String, password: String): boolean`
+* `+ logout(): void`
 * `+ ubahProfil(nama: String, email: String, noHp: String): void`
-* `+ addReceivedNotification(notification: Notification): void`
-* `+ getRole(): UserRole` *(abstract)*
-* `+ getDashboardPath(): String` *(abstract)*
 
-### 11.2 `Notifiable` sebagai interface
+---
 
-**Peran:** Kontrak bagi objek yang dapat menerima notifikasi.
+## 2) `Notifiable` *(interface)*
+
+**Jenis:** interface
+**Atribut:** tidak ada
+
+**Relasi:**
+
+* **is a** → diimplementasikan oleh `Mahasiswa`, `Admin`, `Satpam`
+* **UML:** realization
 
 **Method:**
 
 * `+ receiveNotification(notification: Notification): void`
 
-### 11.3 `Mahasiswa extends User implements Notifiable`
+---
 
-**Atribut khusus:**
+## 3) `Mahasiswa`
+
+**Jenis:** concrete class
+**Atribut:**
 
 * `- nim: String`
 * `- prodi: String`
 * `- angkatan: int`
-* `- reservations: List<Reservation>`
 
-**Method utama:**
+**Relasi:**
 
-* `+ ajukanReservasi(...): Reservation`
-* `+ batalkanReservasi(reservationId: String): boolean`
+* **is a** → turunan dari `User`
+* **uses** → `ReservationService`
+* **uses** → `NotificationService`
+* **has a** → `Reservation` melalui aktivitas pengajuan
+* **UML:** inheritance + association
+
+**Cardinality:**
+
+* `Mahasiswa 1 — 0..* Reservation`
+* `Mahasiswa 1 — 0..* Notification`
+
+**Override:**
+
+* `+ receiveNotification(notification: Notification): void`
+
+**Method:**
+
+* `+ ajukanReservasi(room: Room, tanggal: LocalDate, jamMulai: LocalTime, jamSelesai: LocalTime, tujuan: String): Reservation`
+* `+ batalkanReservasi(reservationId: Long): boolean`
 * `+ lihatStatusReservasi(): List<Reservation>`
 * `+ receiveNotification(notification: Notification): void`
-* `+ getRole(): UserRole`
-* `+ getDashboardPath(): String`
 
-### 11.4 `Admin extends User implements Notifiable`
+---
 
-**Atribut khusus:**
+## 4) `Admin`
+
+**Jenis:** concrete class
+**Atribut:**
 
 * `- unitKerja: String`
 
-**Method utama:**
+**Relasi:**
+
+* **is a** → turunan dari `User`
+* **uses** → `ApprovalService`
+* **uses** → `NotificationService`
+* **has a** → `Approval`
+* **UML:** inheritance + association
+
+**Cardinality:**
+
+* `Admin 1 — 0..* Approval`
+* `Admin 1 — 0..* Notification`
+
+**Override:**
+
+* `+ receiveNotification(notification: Notification): void`
+
+**Method:**
 
 * `+ verifikasiReservasi(reservation: Reservation): boolean`
 * `+ setujuiReservasi(reservation: Reservation, catatan: String): Approval`
 * `+ tolakReservasi(reservation: Reservation, catatan: String): Approval`
 * `+ mintaRevisiData(reservation: Reservation, catatan: String): Approval`
 * `+ receiveNotification(notification: Notification): void`
-* `+ getRole(): UserRole`
-* `+ getDashboardPath(): String`
 
-### 11.5 `Satpam extends User implements Notifiable`
+---
 
-**Atribut khusus:**
+## 5) `Satpam`
+
+**Jenis:** concrete class
+**Atribut:**
 
 * `- shift: String`
 * `- posJaga: String`
 
-**Method utama:**
+**Relasi:**
+
+* **is a** → turunan dari `User`
+* **uses** → `AccessControlService`
+* **uses** → `NotificationService`
+* **has a** → `AccessRecord`
+* **UML:** inheritance + association
+
+**Cardinality:**
+
+* `Satpam 1 — 0..* AccessRecord`
+* `Satpam 1 — 0..* Notification`
+
+**Override:**
+
+* `+ receiveNotification(notification: Notification): void`
+
+**Method:**
 
 * `+ konfirmasiCheckIn(reservation: Reservation): AccessRecord`
 * `+ konfirmasiCheckOut(record: AccessRecord): AccessRecord`
 * `+ catatKendala(record: AccessRecord, deskripsi: String): void`
 * `+ receiveNotification(notification: Notification): void`
-* `+ getRole(): UserRole`
-* `+ getDashboardPath(): String`
 
-### 11.6 `Room`
+---
 
+## 6) `Room`
+
+**Jenis:** concrete class
 **Atribut:**
 
-* `- roomId: String`
+* `- roomId: Long`
 * `- namaRuang: String`
 * `- gedung: String`
 * `- kapasitas: int`
 * `- statusAktif: boolean`
 
-**Method utama:**
+**Relasi:**
+
+* **has a** → dipakai oleh `Reservation`
+* **uses** → `ReservationService` saat validasi ketersediaan
+* **UML:** association
+
+**Cardinality:**
+
+* `Room 1 — 0..* Reservation`
+
+**Override:**
+
+* tidak ada
+
+**Method:**
 
 * `+ aktifkan(): void`
 * `+ nonaktifkan(): void`
 * `+ ubahStatusAktif(statusAktif: boolean): void`
 * `+ getInfoRuang(): String`
 
-Catatan: ketersediaan jadwal tidak ditentukan oleh `Room`, tetapi oleh `ReservationService` dan query pada `ReservationRepository`.
+---
 
-### 11.7 `Reservation`
+## 7) `Reservation`
 
+**Jenis:** concrete class
 **Atribut:**
 
-* `- reservationId: String`
+* `- reservationId: Long`
 * `- mahasiswa: Mahasiswa`
 * `- room: Room`
 * `- tanggal: LocalDate`
@@ -590,681 +225,372 @@ Catatan: ketersediaan jadwal tidak ditentukan oleh `Room`, tetapi oleh `Reservat
 * `- status: ReservationStatus`
 * `- createdAt: LocalDateTime`
 * `- cancelledAt: LocalDateTime`
-* `- alasanPembatalan: String`
 * `- approval: Approval`
 * `- accessRecord: AccessRecord`
-* `- notifications: List<Notification>`
 
-**Method utama:**
+**Relasi:**
+
+* **has a** → `Mahasiswa`
+* **has a** → `Room`
+* **has a** → `Approval`
+* **has a** → `AccessRecord`
+* **uses** → `ReservationStatus`
+* **uses** → `NotificationService`
+* **UML:** association
+
+**Cardinality:**
+
+* `Reservation 1 — 1 Mahasiswa`
+* `Reservation 1 — 1 Room`
+* `Reservation 1 — 0..1 Approval`
+* `Reservation 1 — 0..1 AccessRecord`
+* `Reservation 1 — 0..* Notification`
+
+**Override:**
+
+* tidak ada
+
+**Method:**
 
 * `+ ajukan(): void`
 * `+ ubahStatus(statusBaru: ReservationStatus): void`
 * `+ batalkan(alasan: String): void`
 * `+ validasiWaktu(): boolean`
 * `+ isCanBeCancelled(): boolean`
-* `+ overlaps(tanggal: LocalDate, mulai: LocalTime, selesai: LocalTime): boolean`
-* `+ addNotification(notification: Notification): void`
-* `+ restore(...): Reservation` *(static factory untuk state database)*
 
-Catatan enkapsulasi:
+---
 
-* status tidak memiliki public setter,
-* perubahan status wajib melalui validasi transisi,
-* state dari database dipulihkan melalui `Reservation.restore(...)`,
-* association approval dan access record dihubungkan melalui method package-private.
+## 8) `Approval`
 
-### 11.8 `Approval`
-
+**Jenis:** concrete class
 **Atribut:**
 
-* `- approvalId: String`
+* `- approvalId: Long`
 * `- reservation: Reservation`
 * `- admin: Admin`
 * `- keputusan: ApprovalDecision`
 * `- catatan: String`
 * `- reviewedAt: LocalDateTime`
 
-**Method utama:**
+**Relasi:**
+
+* **has a** → `Reservation`
+* **has a** → `Admin`
+* **uses** → `ApprovalDecision`
+* **UML:** association
+
+**Cardinality:**
+
+* `Approval 1 — 1 Reservation`
+* `Approval 1 — 1 Admin`
+
+**Override:**
+
+* tidak ada
+
+**Method:**
 
 * `+ setujui(catatan: String): void`
 * `+ tolak(catatan: String): void`
 * `+ mintaRevisi(catatan: String): void`
 
-### 11.9 `AccessRecord`
+---
 
+## 9) `AccessRecord`
+
+**Jenis:** concrete class
 **Atribut:**
 
-* `- recordId: String`
+* `- recordId: Long`
 * `- reservation: Reservation`
 * `- satpam: Satpam`
 * `- checkInTime: LocalDateTime`
 * `- checkOutTime: LocalDateTime`
 * `- catatanPelanggaran: String`
 
-**Method utama:**
+**Relasi:**
+
+* **has a** → `Reservation`
+* **has a** → `Satpam`
+* **UML:** association
+
+**Cardinality:**
+
+* `AccessRecord 1 — 1 Reservation`
+* `AccessRecord 1 — 1 Satpam`
+
+**Override:**
+
+* tidak ada
+
+**Method:**
 
 * `+ checkIn(): void`
 * `+ checkOut(): void`
 * `+ laporkanKendala(deskripsi: String): void`
 
-### 11.10 `Notification`
+---
 
+## 10) `Notification`
+
+**Jenis:** concrete class
 **Atribut:**
 
-* `- notificationId: String`
-* `- penerimaId: String`
-* `- penerimaNama: String`
+* `- notificationId: Long`
+* `- penerima: Notifiable`
 * `- pesan: String`
 * `- statusBaca: boolean`
 * `- createdAt: LocalDateTime`
 
-**Method utama:**
+**Relasi:**
+
+* **has a** → `Notifiable`
+* **has a** → bisa terkait ke `Reservation` secara logis jika ingin ditelusuri
+* **UML:** association
+
+**Cardinality:**
+
+* `Notifiable 1 — 0..* Notification`
+* `Reservation 1 — 0..* Notification`
+
+**Override:**
+
+* tidak ada
+
+**Method:**
 
 * `+ kirim(): void`
 * `+ tandaiDibaca(): void`
 
 ---
 
-## 12. Relasi Antar Kelas
+## 11) `ReservationService`
 
-### 12.1 Inheritance
+**Jenis:** service class
+**Atribut:**
 
-```text
-User <|-- Mahasiswa
-User <|-- Admin
-User <|-- Satpam
-```
+* `- reservations: List<Reservation>`
+* `- rooms: List<Room>`
 
-### 12.2 Interface implementation
+**Relasi:**
 
-```text
-Notifiable <|.. Mahasiswa
-Notifiable <|.. Admin
-Notifiable <|.. Satpam
-```
+* **uses** → `Mahasiswa`
+* **uses** → `Room`
+* **uses** → `Reservation`
+* **uses** → `NotificationService`
+* **UML:** dependency + aggregation
 
-### 12.3 Association dan multiplicity
+**Cardinality:**
 
-```text
-Mahasiswa   1     -- 0..* Reservation
-Room        1     -- 0..* Reservation
-Reservation 1     -- 0..1 Approval
-Reservation 1     -- 0..1 AccessRecord
-Reservation 1     -- 0..* Notification
-Admin       1     -- 0..* Approval
-Satpam      1     -- 0..* AccessRecord
-User        1     -- 0..* Notification
-```
+* `ReservationService 1 — 0..* Reservation`
+* `ReservationService 1 — 0..* Room`
 
-### 12.4 Catatan desain relasi
+**Override:**
 
-`Approval` dan `AccessRecord` diperlakukan sebagai association yang disimpan permanen untuk riwayat. Data tidak boleh ikut hilang hanya karena status reservasi berubah.
+* tidak ada
+
+**Method:**
+
+* `+ createReservation(mahasiswa: Mahasiswa, room: Room, tanggal: LocalDate, jamMulai: LocalTime, jamSelesai: LocalTime, tujuan: String): Reservation`
+* `+ validateAvailability(room: Room, tanggal: LocalDate, jamMulai: LocalTime, jamSelesai: LocalTime): boolean`
+* `+ cancelReservation(reservationId: Long, alasan: String): boolean`
+* `+ getReservationHistory(userId: Long): List<Reservation>`
 
 ---
 
-## 13. Traceability Use Case ke Implementasi
+## 12) `ApprovalService`
 
-| Use case | Entity dan interface | Service | Repository | Controller utama |
-| --- | --- | --- | --- | --- |
-| Login pengguna | `User`, `UserRole`, `AuthenticatedUser` | `UserService` | `UserRepository` | `SecurityConfig`, `AuthPageController` |
-| Ajukan reservasi | `Mahasiswa`, `Room`, `Reservation` | `ReservationService`, `NotificationService` | `RoomRepository`, `ReservationRepository`, `NotificationRepository` | `MahasiswaPageController`, `ReservationRestController` |
-| Cek ketersediaan | `Room`, `Reservation` | `ReservationService` | `ReservationRepository` | `ReservationRestController` |
-| Approval | `Admin`, `Approval`, `Reservation` | `ApprovalService`, `NotificationService` | `ApprovalRepository`, `ReservationRepository`, `NotificationRepository` | `AdminPageController`, `ApprovalRestController` |
-| Check-in dan check-out | `Satpam`, `AccessRecord`, `Reservation` | `AccessControlService`, `NotificationService` | `AccessRecordRepository`, `ReservationRepository` | `SatpamPageController`, `AccessRestController` |
-| Catat kendala | `Satpam`, `AccessRecord` | `AccessControlService`, `NotificationService` | `AccessRecordRepository`, `NotificationRepository` | `SatpamPageController`, `AccessRestController` |
-| Batalkan reservasi | `Mahasiswa`, `Reservation` | `ReservationService`, `NotificationService` | `ReservationRepository`, `NotificationRepository` | `ReservationHistoryPageController`, `ReservationRestController` |
-| Lihat riwayat | `Reservation`, `AccessRecord`, `Approval` | Service terkait | Repository terkait | Controller web dan REST terkait |
-| Notifikasi | `Notifiable`, `Notification`, `User` | `NotificationService` | `NotificationRepository` | `NotificationPageController`, `NotificationRestController` |
+**Jenis:** service class
+**Atribut:**
 
----
+* `- approvals: List<Approval>`
 
-## 14. Pemetaan Materi Perkuliahan ke Code
+**Relasi:**
 
-### 14.1 Ringkasan cakupan
+* **uses** → `Admin`
+* **uses** → `Reservation`
+* **uses** → `NotificationService`
+* **UML:** dependency + aggregation
 
-| Kelompok materi | Status pemetaan | Bukti utama dalam code |
-| --- | --- | --- |
-| Java dasar | IMPLEMENTED | tipe data, variable, konstanta, method, parameter, conditional, `switch`, collection, stream, enum, record |
-| Class dan object | IMPLEMENTED | entity domain dan object yang dibuat melalui constructor |
-| Encapsulation | IMPLEMENTED dengan catatan peningkatan | private field, public behavior method, factory restore, immutable collection view, package separation |
-| Inheritance | IMPLEMENTED | `Mahasiswa`, `Admin`, dan `Satpam` mewarisi `User` |
-| Abstract class | IMPLEMENTED | `User` adalah abstract class |
-| Interface | IMPLEMENTED | `Notifiable` dan tiga implementasinya |
-| Polymorphism | IMPLEMENTED | override method per role, reference `User`, reference `Notifiable`, `instanceof`, overload method |
-| Static dan collection | IMPLEMENTED | `AuthSession`, `IdGenerator`, konstanta jam kuliah, `List`, `ArrayList`, stream |
+**Cardinality:**
 
-### 14.2 Mapping `01 JAVA (DCA).pdf`
+* `ApprovalService 1 — 0..* Approval`
 
-Materi membahas sintaks dasar Java, tipe data, variable, konstanta, operator, blok program, percabangan, perulangan, array, input, dan output.
+**Override:**
 
-Mapping pada aplikasi:
+* tidak ada
 
-* `String`, `int`, dan `boolean` dipakai pada seluruh entity.
-* `LocalDate`, `LocalTime`, dan `LocalDateTime` dipakai untuk tanggal dan waktu reservasi.
-* Konstanta `private static final` dipakai pada `ReservationService` untuk `LECTURE_START` dan `LECTURE_END`.
-* Operator logika dipakai pada validasi bisnis, misalnya pengecekan tanggal, jam, status, dan bentrok.
-* Percabangan `if` dipakai pada seluruh service.
-* `switch` dipakai pada transisi status `Reservation` dan pilihan approval pada controller admin.
-* Collection menggantikan kebutuhan array statis untuk data yang dinamis.
-* Input dan output tidak memakai terminal karena aplikasi menggunakan HTTP request, form Thymeleaf, JSON REST API, dan HTML response.
+**Method:**
 
-### 14.3 Mapping `01 INTRODUCTION.pdf`
-
-Materi membahas perbedaan structured programming dan OOP, class, object, state, behavior, identity, reference variable, abstraction, encapsulation, inheritance, dan polymorphism.
-
-Mapping pada aplikasi:
-
-* Entity domain merepresentasikan objek dunia nyata: user, ruang, reservasi, approval, catatan akses, dan notifikasi.
-* Identity terdapat pada `id`, `roomId`, `reservationId`, `approvalId`, `recordId`, dan `notificationId`.
-* State terdapat pada field seperti status reservasi, status ruang, waktu check-in, dan status baca notifikasi.
-* Behavior terdapat pada method seperti `ajukan()`, `batalkan()`, `setujui()`, `checkIn()`, dan `tandaiDibaca()`.
-* Object reference terlihat pada relasi `Reservation` ke `Mahasiswa`, `Room`, `Approval`, dan `AccessRecord`.
-
-### 14.4 Mapping `01 CONCEPT (DCA).pdf`
-
-Materi membahas empat pilar OOP, class, object, atribut, prosedur, fungsi, parameter, visibility, dan constructor.
-
-Mapping pada aplikasi:
-
-* Class domain disusun berdasarkan objek sistem reservasi.
-* Atribut menggunakan field private.
-* Prosedur atau method tanpa hasil terlihat pada `Reservation.ajukan()` dan `Notification.tandaiDibaca()`.
-* Fungsi atau method dengan hasil terlihat pada `Room.getInfoRuang()` dan `Reservation.isCanBeCancelled()`.
-* Parameter dipakai pada method service dan constructor.
-* Visibility `private`, `protected`, `public`, dan package-private dipakai sesuai kebutuhan.
-* Constructor dipakai untuk membuat entity dan dependency injection service.
-
-### 14.5 Mapping `02 ENCAPSULATION.pdf`
-
-Materi membahas data hiding, access modifier, getter-setter, validasi sebelum perubahan state, constructor, constructor overloading, modularity, dan package.
-
-Mapping pada aplikasi:
-
-* Seluruh field entity menggunakan visibility `private`.
-* Entity menyediakan method perilaku untuk perubahan penting, misalnya `Reservation.batalkan(...)`.
-* `Reservation.status` tidak memiliki public setter.
-* `Reservation.ubahStatus(...)` memvalidasi transisi sebelum mengubah state.
-* `List.copyOf(...)` dipakai agar collection internal tidak dapat dimodifikasi langsung dari luar.
-* Package dipisahkan mengikuti style folder dosen menjadi `entity`, `repository`, `service`, `controller`, `controller/rest`, `dto`, `config`, `exception`, `enums`, dan `util`.
-* Constructor overload terlihat pada entity dan method overload terlihat pada service.
-
-Catatan peningkatan:
-
-* Beberapa setter entity masih public karena kebutuhan mapping dan binding.
-* Untuk memperkuat enkapsulasi, setter yang dapat melewati invariant bisnis dapat dikurangi atau dipindahkan menjadi package-private pada iterasi berikutnya.
-
-### 14.6 Mapping `02 ENCAPSULATION CONCEPT (DCA).pdf`
-
-Materi menegaskan visibility, constructor, encapsulation, modularity, dan package.
-
-Mapping pada aplikasi:
-
-* `private` dipakai untuk field.
-* `protected` dipakai pada constructor `User` agar hanya subclass yang membangun state parent.
-* `public` dipakai untuk API perilaku yang memang perlu diakses layer lain.
-* Package-private dipakai pada `Reservation.linkApproval(...)` dan `Reservation.linkAccessRecord(...)`.
-* Modularity diterapkan melalui pemisahan tanggung jawab controller, service, repository, dan entity.
-
-### 14.7 Mapping `04 INHERITANCE.pdf`
-
-Materi membahas hubungan "is-a", `extends`, single inheritance Java, `super`, overriding, `final`, specialization, dan generalization.
-
-Mapping pada aplikasi:
-
-* `Mahasiswa is-a User`.
-* `Admin is-a User`.
-* `Satpam is-a User`.
-* Ketiga subclass memakai `extends User`.
-* Constructor subclass memakai `super(...)`.
-* Subclass melakukan override `getRole()`, `getDashboardPath()`, dan `receiveNotification(...)`.
-* Generalization dipakai untuk memusatkan field umum user.
-* Specialization dipakai untuk field dan perilaku khusus masing-masing role.
-* Utility class `AuthSession` dan `IdGenerator` bersifat `final` agar tidak diturunkan.
-
-### 14.8 Mapping `04 INHERITANCE (DCA).pdf`
-
-Materi menekankan parent class, child class, specialization, generalization, override, keyword `super`, dan keyword `final`.
-
-Mapping pada aplikasi:
-
-* Parent class: `User`.
-* Child class: `Mahasiswa`, `Admin`, dan `Satpam`.
-* Override dipakai agar role dan dashboard ditentukan oleh objek konkret.
-* `super(...)` dipakai untuk inisialisasi atribut umum user.
-* `final` dipakai pada utility class dan konstanta.
-
-### 14.9 Mapping `05 ABSTRACT CLASS & INTERFACE.pdf`
-
-Materi membahas abstract class, abstract method, interface, kontrak perilaku, `extends`, dan `implements`.
-
-Mapping pada aplikasi:
-
-* `User` adalah abstract class dan tidak dibuat sebagai object langsung.
-* `User.getRole()` adalah abstract method.
-* `User.getDashboardPath()` adalah abstract method.
-* `Notifiable` adalah interface.
-* `Mahasiswa`, `Admin`, dan `Satpam` memakai `implements Notifiable`.
-* `NotificationService` bergantung pada kontrak `Notifiable`, bukan pada satu role spesifik.
-
-### 14.10 Mapping `05 ABSTRACT CLASS & INTERFACE (DCA).pdf`
-
-Materi membedakan abstract class dan interface sebagai kontrak.
-
-Mapping pada aplikasi:
-
-* Abstract class `User` menyimpan state dan behavior bersama.
-* Interface `Notifiable` fokus pada satu kontrak: menerima notifikasi.
-* Satu subclass tetap hanya mewarisi satu parent class, tetapi dapat mengimplementasikan interface.
-
-### 14.11 Mapping `06 POLYMORPHISM.pdf`
-
-Materi membahas polymorphism, casting, virtual method invocation, `instanceof`, static modifier, collection, generic collection, filter, dan lambda expression.
-
-Mapping pada aplikasi:
-
-* `UserRepository.findUserByUsername(...)` mengembalikan reference bertipe `User`, tetapi object aktual dapat berupa `Mahasiswa`, `Admin`, atau `Satpam`.
-* Pemanggilan `user.getRole()` dan `user.getDashboardPath()` menghasilkan behavior sesuai subclass aktual.
-* `NotificationService` menerima parameter `Notifiable` sehingga satu service melayani beberapa tipe penerima.
-* Pattern matching `instanceof` dipakai pada `UserService` dan `NotificationService`.
-* Static method dipakai pada `AuthSession` dan `IdGenerator`.
-* Generic collection dipakai melalui `List<Reservation>`, `List<Notification>`, dan tipe list lain.
-* Filter dan lambda expression dipakai pada stream reservasi.
-* Overloading terlihat pada `ReservationService.createReservation(...)` dan `NotificationService.sendNotification(...)`.
-
-Catatan:
-
-* Materi `Comparator` dan sorting collection tidak menjadi kebutuhan utama domain saat ini.
-* Sorting data operasional lebih banyak dilakukan melalui `ORDER BY` pada query repository.
-
-### 14.12 Mapping `06 POLYMORPHISM (DCA).pdf`
-
-Materi menekankan polymorphism statis, polymorphism dinamis, casting, `instanceof`, static, dan collection.
-
-Mapping pada aplikasi:
-
-* Polymorphism statis: constructor overload dan method overload.
-* Polymorphism dinamis: override `getRole()` dan `getDashboardPath()`.
-* Upcasting: object subclass dikembalikan dan digunakan melalui tipe `User` atau `Notifiable`.
-* Safe type check: pattern matching `instanceof`.
-* Static: utility method dan konstanta class-level.
-* Collection: list entity dan pemrosesan stream.
+* `+ verifyReservation(reservation: Reservation): boolean`
+* `+ approveReservation(admin: Admin, reservation: Reservation, catatan: String): Approval`
+* `+ rejectReservation(admin: Admin, reservation: Reservation, catatan: String): Approval`
+* `+ requestRevision(admin: Admin, reservation: Reservation, catatan: String): Approval`
 
 ---
 
-## 15. Evaluasi Empat Pilar OOP
+## 13) `AccessControlService`
 
-### 15.1 Encapsulation
+**Jenis:** service class
+**Atribut:**
 
-**Status:** IMPLEMENTED dengan ruang peningkatan.
+* `- accessRecords: List<AccessRecord>`
 
-Kekuatan:
+**Relasi:**
 
-* field entity bersifat private,
-* perubahan status reservasi tervalidasi,
-* collection internal dikembalikan sebagai immutable copy,
-* layer dipisah berdasarkan tanggung jawab.
+* **uses** → `Satpam`
+* **uses** → `Reservation`
+* **uses** → `NotificationService`
+* **UML:** dependency + aggregation
 
-Peningkatan berikutnya:
+**Cardinality:**
 
-* kurangi setter public yang dapat melewati invariant,
-* buat method domain lebih dominan daripada direct mutation,
-* pertimbangkan DTO khusus untuk request agar entity tidak dipakai langsung sebagai payload pada endpoint tertentu.
+* `AccessControlService 1 — 0..* AccessRecord`
 
-### 15.2 Inheritance
+**Override:**
 
-**Status:** IMPLEMENTED.
+* tidak ada
 
-`User` memusatkan atribut umum, sedangkan `Mahasiswa`, `Admin`, dan `Satpam` menambahkan atribut dan perilaku khusus.
+**Method:**
 
-### 15.3 Abstraction
-
-**Status:** IMPLEMENTED.
-
-`User` menyatakan kontrak abstrak role dan dashboard, sedangkan `Notifiable` menyatakan kontrak penerimaan notifikasi.
-
-### 15.4 Polymorphism
-
-**Status:** IMPLEMENTED.
-
-Behavior dashboard dan role dipilih dari object konkret walaupun reference bertipe `User`. Notifikasi dikirim melalui kontrak `Notifiable`.
+* `+ checkIn(satpam: Satpam, reservation: Reservation): AccessRecord`
+* `+ checkOut(satpam: Satpam, recordId: Long): AccessRecord`
+* `+ reportIssue(satpam: Satpam, recordId: Long, deskripsi: String): void`
 
 ---
 
-## 16. Endpoint MVC Web Aktual
+## 14) `NotificationService`
 
-| Method | Path | Keterangan |
-| --- | --- | --- |
-| `GET` | `/` | Redirect ke login |
-| `GET` | `/login` | Form login |
-| `POST` | `/logout` | Logout Spring Security |
-| `GET` | `/dashboard` | Redirect ke dashboard sesuai role |
-| `GET` | `/mahasiswa/dashboard` | Dashboard mahasiswa |
-| `GET` | `/admin/dashboard` | Dashboard admin |
-| `GET` | `/satpam/dashboard` | Dashboard satpam |
-| `GET` | `/registrasi` | Form registrasi mahasiswa |
-| `POST` | `/registrasi` | Simpan registrasi mahasiswa |
-| `GET` | `/rooms` | Daftar ruang |
-| `GET` | `/reservasi` | Form pengajuan |
-| `POST` | `/reservasi` | Simpan pengajuan |
-| `GET` | `/reservasi/history` | Riwayat reservasi |
-| `POST` | `/reservasi/{reservationId}/cancel` | Batalkan reservasi |
-| `GET` | `/admin/approval` | Halaman approval |
-| `POST` | `/admin/approval/{reservationId}/{decision}` | Proses approval |
-| `GET` | `/satpam/access` | Halaman access control |
-| `POST` | `/satpam/access/{reservationId}/check-in` | Check-in |
-| `POST` | `/satpam/access/{recordId}/check-out` | Check-out |
-| `POST` | `/satpam/access/{recordId}/issue` | Catat kendala |
-| `GET` | `/notifications` | Daftar notifikasi |
-| `POST` | `/notifications/{notificationId}/read` | Tandai dibaca |
+**Jenis:** service class
+**Atribut:**
 
----
+* `- notifications: List<Notification>`
 
-## 17. Endpoint REST API Aktual
+**Relasi:**
 
-| Area | Endpoint |
-| --- | --- |
-| Mahasiswa | `GET /api/mahasiswa`, `GET /api/mahasiswa/{id}`, `POST /api/mahasiswa`, `PUT /api/mahasiswa/{id}` |
-| Admin | `GET /api/admins`, `POST /api/admins` |
-| Satpam | `GET /api/satpam`, `POST /api/satpam` |
-| Ruang | `GET /api/rooms`, `GET /api/rooms/{roomId}`, `POST /api/rooms`, `PUT /api/rooms/{roomId}/status` |
-| Reservasi | `GET /api/reservations`, `GET /api/reservations/{id}`, `GET /api/reservations/availability`, `POST /api/reservations`, `POST /api/reservations/{id}/cancel` |
-| Approval | `GET /api/approvals`, `POST /api/approvals/{reservationId}/approve`, `POST /api/approvals/{reservationId}/reject`, `POST /api/approvals/{reservationId}/revision` |
-| Access control | `GET /api/access`, `POST /api/access/{reservationId}/check-in`, `PUT /api/access/{recordId}/check-out`, `POST /api/access/{recordId}/issue` |
-| Notifikasi | `GET /api/notifications`, `POST /api/notifications`, `PUT /api/notifications/{id}/read` |
+* **uses** → `Notifiable`
+* **uses** → `Reservation`
+* **UML:** dependency + aggregation
+
+**Cardinality:**
+
+* `NotificationService 1 — 0..* Notification`
+
+**Override:**
+
+* tidak ada
+
+**Method:**
+
+* `+ sendNotification(penerima: Notifiable, pesan: String): Notification`
+* `+ sendStatusUpdate(penerima: Notifiable, reservation: Reservation, pesan: String): Notification`
 
 ---
 
-## 18. Keamanan Aktual
+## 15) `ReservationStatus` *(enum)*
 
-### 18.1 Autentikasi
+**Nilai:**
 
-* Login ditangani Spring Security.
-* Username dibaca dari database.
-* Password disimpan dalam bentuk BCrypt hash.
-* Session menyimpan role, user ID, dan nama pengguna.
-* Session fixation protection memakai migrasi session.
+* `DRAFT`
+* `PENDING`
+* `APPROVED`
+* `REJECTED`
+* `ACTIVE`
+* `COMPLETED`
+* `CANCELLED`
 
-### 18.2 Otorisasi
+**Relasi:**
 
-* Route mahasiswa dibatasi untuk role `MAHASISWA`.
-* Route admin dibatasi untuk role `ADMIN`.
-* Route satpam dibatasi untuk role `SATPAM`.
-* Endpoint approval hanya dapat digunakan admin.
-* Endpoint access control hanya dapat digunakan satpam.
-* Endpoint create dan cancel reservasi hanya dapat digunakan mahasiswa.
-* Mahasiswa tidak dapat membaca detail reservasi mahasiswa lain.
-* Pengguna tidak dapat menandai notifikasi milik pengguna lain sebagai dibaca.
-
-### 18.3 Proteksi request
-
-* Form POST MVC memakai CSRF token Spring Security.
-* API request memakai validasi Jakarta Validation pada DTO record tertentu.
-* Exception API ditangani oleh `GlobalExceptionHandler`.
+* dipakai oleh `Reservation`
 
 ---
 
-## 19. Model Database Relasional
+## 16) `ApprovalDecision` *(enum)*
 
-### 19.1 Tabel `users`
+**Nilai:**
 
-Menyimpan semua tipe user dalam satu tabel dengan kolom role.
+* `SETUJUI`
+* `TOLAK`
+* `REVISI`
 
-| Kolom | Fungsi |
-| --- | --- |
-| `id` | Primary key user |
-| `username` | Username login unik |
-| `role` | `MAHASISWA`, `ADMIN`, atau `SATPAM` |
-| `nama` | Nama user |
-| `email` | Email |
-| `no_hp` | Nomor telepon |
-| `password_hash` | BCrypt hash |
-| `nim`, `prodi`, `angkatan` | Data khusus mahasiswa |
-| `unit_kerja` | Data khusus admin |
-| `shift`, `pos_jaga` | Data khusus satpam |
+**Relasi:**
 
-### 19.2 Tabel `rooms`
-
-| Kolom | Fungsi |
-| --- | --- |
-| `room_id` | Primary key ruang |
-| `nama_ruang` | Nama ruang |
-| `gedung` | Lokasi gedung |
-| `kapasitas` | Kapasitas |
-| `status_aktif` | Penanda ruang dapat dipakai |
-
-### 19.3 Tabel `reservations`
-
-| Kolom | Fungsi |
-| --- | --- |
-| `reservation_id` | Primary key reservasi |
-| `mahasiswa_id` | Foreign key ke `users` |
-| `room_id` | Foreign key ke `rooms` |
-| `tanggal` | Tanggal penggunaan |
-| `jam_mulai`, `jam_selesai` | Rentang waktu |
-| `tujuan` | Tujuan penggunaan |
-| `status` | Status reservasi |
-| `created_at` | Waktu dibuat |
-| `cancelled_at` | Waktu pembatalan |
-| `alasan_pembatalan` | Alasan pembatalan |
-
-### 19.4 Tabel `approvals`
-
-| Kolom | Fungsi |
-| --- | --- |
-| `approval_id` | Primary key approval |
-| `reservation_id` | Foreign key unik ke reservasi |
-| `admin_id` | Foreign key ke user admin |
-| `keputusan` | Keputusan approval |
-| `catatan` | Catatan admin |
-| `reviewed_at` | Waktu pemeriksaan |
-
-### 19.5 Tabel `access_records`
-
-| Kolom | Fungsi |
-| --- | --- |
-| `record_id` | Primary key access record |
-| `reservation_id` | Foreign key unik ke reservasi |
-| `satpam_id` | Foreign key ke user satpam |
-| `check_in_time` | Waktu check-in |
-| `check_out_time` | Waktu check-out |
-| `catatan_pelanggaran` | Kendala atau pelanggaran |
-
-### 19.6 Tabel `notifications`
-
-| Kolom | Fungsi |
-| --- | --- |
-| `notification_id` | Primary key notifikasi |
-| `penerima_id` | Foreign key ke user |
-| `penerima_nama` | Snapshot nama penerima |
-| `reservation_id` | Foreign key opsional ke reservasi |
-| `pesan` | Isi notifikasi |
-| `status_baca` | Status baca |
-| `created_at` | Waktu dibuat |
-
-### 19.7 Constraint penting
-
-* `username` unik.
-* Satu reservasi memiliki maksimal satu approval.
-* Satu reservasi memiliki maksimal satu access record.
-* Foreign key menjaga hubungan antar tabel.
-* Index availability mempercepat query bentrok ruang.
+* dipakai oleh `Approval`
 
 ---
 
-## 20. Revisi Database: MySQL Server dan phpMyAdmin
+# Relasi antar kelas yang lengkap
 
-### 20.1 Keputusan target
+## Inheritance / is a
 
-**IMPLEMENTED pada starter:** database utama aplikasi menggunakan MariaDB/MySQL Server. phpMyAdmin digunakan sebagai alat administrasi database.
+* `Mahasiswa` **is a** `User`
+* `Admin` **is a** `User`
+* `Satpam` **is a** `User`
 
-Nama database yang direkomendasikan:
+## Interface implementation
 
-```text
-reservasi_ruang
-```
+* `Mahasiswa` **is a** `Notifiable`
+* `Admin` **is a** `Notifiable`
+* `Satpam` **is a** `Notifiable`
 
-### 20.2 Kondisi source code starter
+## Association / has a
 
-**IMPLEMENTED pada starter:** migrasi teknis database utama sudah selesai.
+* `Mahasiswa` **has a** `Reservation`
+* `Reservation` **has a** `Mahasiswa`
+* `Reservation` **has a** `Room`
+* `Reservation` **has a** `Approval`
+* `Reservation` **has a** `AccessRecord`
+* `Reservation` **has a** `Notification`
+* `Approval` **has a** `Admin`
+* `Approval` **has a** `Reservation`
+* `AccessRecord` **has a** `Satpam`
+* `AccessRecord` **has a** `Reservation`
+* `Notification` **has a** `Notifiable`
+* `Room` **has a** `Reservation` secara relasi bisnis
 
-Bukti kondisi saat ini:
+## Uses
 
-* dependency runtime pada `pom.xml` memakai `com.mysql:mysql-connector-j`,
-* `application.properties` memakai `jdbc:mysql://localhost:3306/reservasi_ruang`,
-* schema dibuat/diperbarui otomatis oleh JPA/Hibernate seperti contoh dosen,
-* `database/create_database.sql` tersedia untuk membuat database lokal,
-* `database/verify_database.sql` tersedia untuk audit isi dan integritas relasi,
-* H2 hanya dipakai pada test in-memory dengan `MODE=MySQL`.
+* `Mahasiswa` **uses** `ReservationService`
+* `Mahasiswa` **uses** `NotificationService`
+* `Admin` **uses** `ApprovalService`
+* `Admin` **uses** `NotificationService`
+* `Satpam` **uses** `AccessControlService`
+* `Satpam` **uses** `NotificationService`
+* `ReservationService` **uses** `NotificationService`
+* `ApprovalService` **uses** `NotificationService`
+* `AccessControlService` **uses** `NotificationService`
+* `NotificationService` **uses** `Notifiable`
 
-### 20.3 Konfigurasi Spring Boot
+## Agregasi yang cocok
 
-Dependency runtime:
+* `ReservationService` ◇ `Reservation`
+* `ReservationService` ◇ `Room`
+* `ApprovalService` ◇ `Approval`
+* `AccessControlService` ◇ `AccessRecord`
+* `NotificationService` ◇ `Notification`
 
-```xml
-<dependency>
-    <groupId>com.mysql</groupId>
-    <artifactId>mysql-connector-j</artifactId>
-    <scope>runtime</scope>
-</dependency>
-```
+## Komposisi
 
-Konfigurasi datasource:
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/reservasi_ruang?useSSL=false&serverTimezone=Asia/Jakarta&allowPublicKeyRetrieval=true
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.datasource.username=root
-spring.datasource.password=
-```
-
-Password production tidak boleh ditulis langsung ke repository.
-
-### 20.4 Workflow database starter
-
-1. Instal dan jalankan MariaDB/MySQL Server.
-2. Buka phpMyAdmin jika ingin memeriksa data secara visual.
-3. Jalankan `database/create_database.sql` jika database `reservasi_ruang` belum ada.
-4. Jalankan aplikasi Spring Boot.
-5. Biarkan Hibernate membuat atau menyesuaikan tabel melalui `ddl-auto=update`.
-6. Jalankan `database/verify_database.sql` untuk audit isi database bila diperlukan.
-7. Pertahankan H2 hanya sebagai database test in-memory.
-
-### 20.5 Catatan kompatibilitas
-
-Query repository dasar seperti `SELECT`, `INSERT`, `UPDATE`, `COUNT`, `JOIN`, dan
-`FOR UPDATE` dapat digunakan pada MariaDB/MySQL. Repository final tetap harus memakai
-parameterized query dan transaksi untuk alur kritis.
+* **Tidak wajib dipakai** pada model inti ini
+  Jika dipaksakan, justru berisiko salah secara lifecycle data.
 
 ---
 
-## 21. Transaksi dan Konsistensi Data
+# Cardinality final yang disarankan
 
-### 21.1 Transaksi serializable
+* `Mahasiswa 1 — 0..* Reservation`
+* `Room 1 — 0..* Reservation`
+* `Reservation 1 — 1 Mahasiswa`
+* `Reservation 1 — 1 Room`
+* `Reservation 1 — 0..1 Approval`
+* `Reservation 1 — 0..1 AccessRecord`
+* `Reservation 1 — 0..* Notification`
+* `Admin 1 — 0..* Approval`
+* `Satpam 1 — 0..* AccessRecord`
+* `Notifiable 1 — 0..* Notification`
+* `ReservationService 1 — 0..* Reservation`
+* `ReservationService 1 — 0..* Room`
+* `ApprovalService 1 — 0..* Approval`
+* `AccessControlService 1 — 0..* AccessRecord`
+* `NotificationService 1 — 0..* Notification`
 
-Alur kritis memakai `@Transactional(isolation = Isolation.SERIALIZABLE)`:
-
-* membuat reservasi,
-* membatalkan reservasi,
-* memproses approval,
-* check-in,
-* check-out.
-
-### 21.2 Row locking
-
-Repository memakai `SELECT ... FOR UPDATE` untuk:
-
-* mengunci ruang ketika reservasi dibuat,
-* mengunci reservasi ketika approval diproses,
-* mengunci reservasi ketika check-in atau check-out diproses,
-* mengurangi risiko race condition.
-
-### 21.3 Constraint database
-
-Constraint unik pada approval dan access record menjadi perlindungan tambahan jika dua request masuk hampir bersamaan.
-
----
-
-## 22. Pengujian Starter Aktual
-
-Pada verifikasi starter tanggal 2 Juni 2026, perintah berikut berhasil dijalankan:
-
-```text
-mvn test
-```
-
-Hasil:
-
-```text
-BUILD SUCCESS
-```
-
-Test starter aktif mencakup:
-
-* Spring context dapat berjalan,
-* pembatasan akses antar role,
-* login `mhs`, `adm`, dan `stm`,
-* redirect dashboard berdasarkan role,
-* larangan pengguna membuka dashboard role lain.
-
-Slot test berkomentar sudah tersedia pada folder `src/test/java` untuk setiap entity,
-repository, service, API controller, dan MVC controller. Anggota mengisi slot tersebut
-bersamaan dengan implementasi fitur.
-
-Catatan database test:
-
-* Test otomatis memakai H2 in-memory dengan `MODE=MySQL`.
-* Audit database MariaDB/MySQL lokal dilakukan melalui `database/verify_database.sql`.
-* Tambahkan integration test MariaDB/MySQL jika perubahan query membutuhkan validasi khusus vendor.
-
----
-
-## 23. Gap dan Prioritas Pengembangan Berikutnya
-
-### Prioritas 1: Isi modul bisnis pada scaffold
-
-* Implementasikan entity domain, repository JPA, service, REST controller, dan controller MVC.
-* Gunakan file placeholder yang sudah tersedia agar ownership tetap jelas.
-* Sesuaikan entity JPA jika implementasi membutuhkan perubahan schema.
-
-### Prioritas 2: Perkuat encapsulation
-
-* Evaluasi setter public pada entity.
-* Gunakan DTO request secara konsisten.
-* Pastikan semua perubahan state penting melewati domain method atau service.
-
-### Prioritas 3: Lengkapi flow revisi
-
-* Tambahkan edit reservasi setelah `REVISION_REQUESTED`.
-* Tambahkan resubmit sehingga reservasi dapat kembali ke `PENDING`.
-* Pertimbangkan histori perubahan data.
-
-### Prioritas 4: Isi slot pengujian
-
-* Tambahkan test overlap jadwal.
-* Tambahkan test batas jam kuliah hari kerja.
-* Tambahkan test akhir pekan.
-* Tambahkan test pembatalan pada setiap status.
-* Tambahkan test duplicate approval dan duplicate check-in.
-* Tambahkan test API validation.
-
----
-
-## 24. Kesimpulan
-
-Target sistem menerapkan materi utama Java dan OOP secara nyata:
-
-* class dan object pada domain reservasi,
-* encapsulation pada field dan perubahan state,
-* inheritance melalui hierarki `User`,
-* abstraction melalui abstract class `User`,
-* interface melalui `Notifiable`,
-* polymorphism melalui override, reference parent/interface, overload, dan `instanceof`,
-* collection dan static utility pada implementasi aplikasi,
-* modularity melalui pemisahan package dan layer.
-
-Starter saat ini sudah memiliki login Spring Security, isolasi tiga role, entity JPA,
-repository JPA, service starter, controller MVC/REST, seeder data awal, dan struktur file
-lengkap. Fitur bisnis detail masih dapat dilanjutkan oleh anggota sesuai jobdesk.
-
-Database utama sudah memakai **MariaDB/MySQL Server** dan **phpMyAdmin** sebagai alat
-administrasi. H2 dipertahankan hanya untuk test in-memory.

@@ -1,6 +1,5 @@
 package com.tup.reservasi.controller;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,28 +7,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.tup.reservasi.dto.AccessIssueRequest;
-import com.tup.reservasi.dto.AccessRecordResponse;
 import com.tup.reservasi.service.AccessControlService;
 
 /*
- * Penanggung jawab: Tadzkiroh Aziziyah Haqia.
- *
- * Arahan halaman dari class-diagram:
- * - Controller ini nanti menghubungkan halaman Satpam dengan behaviour:
- *   konfirmasiCheckIn(): AccessRecord
- *   konfirmasiCheckOut(): AccessRecord
- *   catatKendala()
- *   receiveNotification()
- * - Data yang perlu dikirim ke view:
- *   profil Satpam: shift, posJaga.
- *   daftar Reservation yang dapat check-in/check-out.
- *   daftar AccessRecord yang ditangani Satpam.
- *   daftar Notification untuk Satpam.
- * - File ini tetap komentar sampai fitur satpam mulai dikerjakan.
+ * Penanggung jawab: Tadzkiroh Aziziyah Haqia - 103112400242.
+ * Modul: Satpam dan AccessControlService.
  */
-
 @Controller
 @RequestMapping("/satpam")
 public class SatpamController {
@@ -42,49 +27,60 @@ public class SatpamController {
 
     @GetMapping
     public String satpamHome() {
+        return "redirect:/satpam/dashboard";
+    }
+
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        model.addAttribute("records", this.accessControlService.getAllRecords());
+        model.addAttribute("belumCheckOut", this.accessControlService.getBelumCheckOut());
         return "satpam/dashboard";
     }
 
     @GetMapping("/akses")
-    public String aksesRuangan(Model model, Authentication authentication) {
-        String satpamId = authentication.getName();
-        model.addAttribute("records", accessControlService.getRecordsBySatpam(satpamId)
-                .stream()
-                .map(AccessRecordResponse::from)
-                .toList());
-        model.addAttribute("belumCheckOut", accessControlService.getBelumCheckOut()
-                .stream()
-                .map(AccessRecordResponse::from)
-                .toList());
+    public String aksesRuangan(Model model) {
+        model.addAttribute("records", this.accessControlService.getAllRecords());
+        model.addAttribute("belumCheckOut", this.accessControlService.getBelumCheckOut());
         return "access/list";
     }
 
-    @PostMapping("/akses/{reservationId}/check-in")
-    public String konfirmasiCheckIn(
-            @PathVariable String reservationId,
-            Authentication authentication) {
-        accessControlService.checkIn(reservationId, authentication.getName());
+    @PostMapping("/akses/check-in")
+    public String konfirmasiCheckIn(@RequestParam Long satpamId,
+            @RequestParam Long reservationId,
+            RedirectAttributes redirectAttrs) {
+        try {
+            this.accessControlService.checkIn(satpamId, reservationId);
+            redirectAttrs.addFlashAttribute("sukses", "Check-in berhasil");
+        } catch (RuntimeException e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/satpam/akses";
     }
 
-    @PostMapping("/akses/{reservationId}/check-out")
-    public String konfirmasiCheckOut(
-            @PathVariable String reservationId,
-            Authentication authentication) {
-        accessControlService.checkOut(reservationId, authentication.getName());
+    @PostMapping("/akses/{recordId}/check-out")
+    public String konfirmasiCheckOut(@PathVariable Long recordId,
+            @RequestParam Long satpamId,
+            RedirectAttributes redirectAttrs) {
+        try {
+            this.accessControlService.checkOut(satpamId, recordId);
+            redirectAttrs.addFlashAttribute("sukses", "Check-out berhasil");
+        } catch (RuntimeException e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/satpam/akses";
     }
 
-    @PostMapping("/akses/catat-kendala")
-    public String catatKendala(
-            @RequestParam String reservationId,
+    @PostMapping("/akses/{recordId}/kendala")
+    public String catatKendala(@PathVariable Long recordId,
+            @RequestParam Long satpamId,
             @RequestParam String catatanPelanggaran,
-            Authentication authentication) {
-        AccessIssueRequest request = new AccessIssueRequest(
-                reservationId,
-                authentication.getName(),
-                catatanPelanggaran);
-        accessControlService.reportIssue(request);
+            RedirectAttributes redirectAttrs) {
+        try {
+            this.accessControlService.reportIssue(satpamId, recordId, catatanPelanggaran);
+            redirectAttrs.addFlashAttribute("sukses", "Kendala berhasil dicatat");
+        } catch (RuntimeException e) {
+            redirectAttrs.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/satpam/akses";
     }
 }

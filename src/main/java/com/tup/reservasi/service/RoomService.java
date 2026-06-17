@@ -1,22 +1,19 @@
 package com.tup.reservasi.service;
 
-/*
- * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
- *
- * Service ini mengelola entitas Room. Semua logika bisnis
- * (validasi, perubahan status, dll) berada di sini, sehingga
- * controller tetap tipis dan hanya berurusan dengan HTTP.
- */
+import java.util.List;
 
-import com.tup.reservasi.entity.Room;
-import com.tup.reservasi.repository.RoomRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import com.tup.reservasi.entity.Room;
+import com.tup.reservasi.repository.RoomRepository;
 
+/*
+ * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar - 103112400213.
+ * Modul: Room.
+ */
 @Service
+@Transactional
 public class RoomService {
 
     private final RoomRepository roomRepository;
@@ -25,100 +22,52 @@ public class RoomService {
         this.roomRepository = roomRepository;
     }
 
-    /* ------------------------------------------------------------------ */
-    // CREATE
-    @Transactional
-    public Room createRoom(Room room) {
-        // Simple creation; additional validation can be added later.
-        validateRoom(room);
-        return roomRepository.save(room);
-    }
-
-    /* ------------------------------------------------------------------ */
-    // READ
-    public Optional<Room> getRoomById(String roomId) {
-        return roomRepository.findById(roomId);
-    }
-
+    @Transactional(readOnly = true)
     public List<Room> getAllRooms() {
-        return roomRepository.findAll();
+        return this.roomRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
+    public Room getRoomById(Long roomId) {
+        return this.roomRepository.findById(roomId).orElseThrow(() -> new RuntimeException("Room tidak ditemukan"));
+    }
+
+    public Room createRoom(Room room) {
+        return this.roomRepository.save(room);
+    }
+
+    public Room updateRoom(Long roomId, Room updatedData) {
+        Room roomExisting = getRoomById(roomId);
+        roomExisting.setNamaRuang(updatedData.getNamaRuang());
+        roomExisting.setGedung(updatedData.getGedung());
+        roomExisting.setKapasitas(updatedData.getKapasitas());
+        roomExisting.setStatusAktif(updatedData.isStatusAktif());
+        return this.roomRepository.save(roomExisting);
+    }
+
+    public void deleteRoom(Long roomId) {
+        Room roomExisting = getRoomById(roomId);
+        this.roomRepository.delete(roomExisting);
+    }
+
+    public Room updateRoomStatus(Long roomId, boolean statusAktif) {
+        Room roomExisting = getRoomById(roomId);
+        roomExisting.ubahStatusAktif(statusAktif);
+        return this.roomRepository.save(roomExisting);
+    }
+
+    @Transactional(readOnly = true)
     public List<Room> getActiveRooms() {
-        return roomRepository.findByStatusAktif(true);
+        return this.roomRepository.findByStatusAktif(true);
     }
 
-    public List<Room> findByGedung(String gedung) {
-        return roomRepository.findByGedung(gedung);
+    @Transactional(readOnly = true)
+    public List<Room> getRoomsByGedung(String gedung) {
+        return this.roomRepository.findByGedung(gedung);
     }
 
-    public List<Room> findByKapasitasGreaterThanEqual(int kapasitas) {
-        return roomRepository.findByKapasitasGreaterThanEqual(kapasitas);
-    }
-
-    public List<Room> findByNamaRuang(String namaRuang) {
-        return roomRepository.findByNamaRuang(namaRuang);
-    }
-
-    /* ------------------------------------------------------------------ */
-    // UPDATE
-    @Transactional
-    public Room updateRoom(Room updatedRoom) {
-        validateRoom(updatedRoom);
-        Room existing = roomRepository.findById(updatedRoom.getRoomId())
-                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
-        existing.setNamaRuang(updatedRoom.getNamaRuang());
-        existing.setGedung(updatedRoom.getGedung());
-        existing.setKapasitas(updatedRoom.getKapasitas());
-        existing.setStatusAktif(updatedRoom.isStatusAktif());
-        return roomRepository.save(existing);
-    }
-
-    @Transactional
-    public void activateRoom(String roomId) {
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
-        room.aktifkan();
-        roomRepository.save(room);
-    }
-
-    @Transactional
-    public void deactivateRoom(String roomId) {
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
-        room.nonaktifkan();
-        roomRepository.save(room);
-    }
-
-    /* ------------------------------------------------------------------ */
-    // DELETE
-    @Transactional
-    public void deleteRoom(String roomId) {
-        if (!roomRepository.existsById(roomId)) {
-            throw new IllegalArgumentException("Room not found");
-        }
-        roomRepository.deleteById(roomId);
-    }
-
-    /* ------------------------------------------------------------------ */
-    // UTILITIES
-    public String getInfoRuang(String roomId) {
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
-        return room.getInfoRuang();
-    }
-    private void validateRoom(Room room) {
-        if (room == null) {
-            throw new IllegalArgumentException("Room tidak boleh kosong");
-        }
-        if (room.getNamaRuang() == null || room.getNamaRuang().isBlank()) {
-            throw new IllegalArgumentException("Nama ruang tidak boleh kosong");
-        }
-        if (room.getGedung() == null || room.getGedung().isBlank()) {
-            throw new IllegalArgumentException("Gedung tidak boleh kosong");
-        }
-        if (room.getKapasitas() < 1) {
-            throw new IllegalArgumentException("Kapasitas minimal 1");
-        }
+    @Transactional(readOnly = true)
+    public List<Room> getRoomsByKapasitasMinimal(int kapasitas) {
+        return this.roomRepository.findByKapasitasGreaterThanEqual(kapasitas);
     }
 }

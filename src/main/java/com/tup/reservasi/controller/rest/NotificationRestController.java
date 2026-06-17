@@ -4,8 +4,9 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -13,65 +14,78 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tup.reservasi.dto.NotificationRequest;
-import com.tup.reservasi.dto.NotificationResponse;
-import com.tup.reservasi.entity.Notifiable;
 import com.tup.reservasi.entity.Notification;
-import com.tup.reservasi.entity.User;
-import com.tup.reservasi.repository.UserRepository;
 import com.tup.reservasi.service.NotificationService;
 
-import jakarta.validation.Valid;
-
+/*
+ * Penanggung jawab: Ajda Mutiara Zahra - 103112400210.
+ * Modul: Notification.
+ */
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationRestController {
 
     private final NotificationService notificationService;
-    private final UserRepository userRepository;
 
-    public NotificationRestController(NotificationService notificationService, UserRepository userRepository) {
+    public NotificationRestController(NotificationService notificationService) {
         this.notificationService = notificationService;
-        this.userRepository = userRepository;
     }
 
     @GetMapping
-    public List<NotificationResponse> getNotifications(Authentication authentication) {
-        if (authentication == null) {
-            throw new IllegalStateException("Pengguna belum terautentikasi");
+    public ResponseEntity<List<Notification>> getAllNotifications() {
+        return ResponseEntity.ok(this.notificationService.getAllNotifications());
+    }
+
+    @GetMapping("/{notificationId}")
+    public ResponseEntity<Notification> getNotificationById(@PathVariable Long notificationId) {
+        try {
+            return ResponseEntity.ok(this.notificationService.getNotificationById(notificationId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
-        return notificationService.getNotificationsForPenerima(authentication.getName())
-                .stream()
-                .map(this::toResponse)
-                .toList();
     }
 
     @PostMapping
-    public ResponseEntity<NotificationResponse> sendNotification(@Valid @RequestBody NotificationRequest request) {
-        User penerima = userRepository.findById(request.getPenerimaId())
-                .orElseThrow(() -> new IllegalArgumentException("Penerima dengan ID " + request.getPenerimaId() + " tidak ditemukan"));
+    public ResponseEntity<Notification> createNotification(@RequestBody Notification notification) {
+        Notification notificationCreated = this.notificationService.createNotification(notification);
+        return ResponseEntity.status(HttpStatus.CREATED).body(notificationCreated);
+    }
 
-        if (!(penerima instanceof Notifiable)) {
-            throw new IllegalArgumentException("Penerima tidak dapat menerima notifikasi");
+    @PutMapping("/{notificationId}")
+    public ResponseEntity<Notification> updateNotification(@PathVariable Long notificationId,
+            @RequestBody Notification notification) {
+        try {
+            return ResponseEntity.ok(this.notificationService.updateNotification(notificationId, notification));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
-
-        Notification notification = notificationService.sendNotification((Notifiable) penerima, request.getPesan());
-        return new ResponseEntity<>(toResponse(notification), HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable String id) {
-        notificationService.markAsRead(id);
-        return ResponseEntity.noContent().build();
+    @PostMapping("/{notificationId}/read")
+    public ResponseEntity<Notification> tandaiDibaca(@PathVariable Long notificationId) {
+        try {
+            return ResponseEntity.ok(this.notificationService.tandaiDibaca(notificationId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    private NotificationResponse toResponse(Notification notification) {
-        return new NotificationResponse(
-                notification.getNotificationId(),
-                notification.getPenerimaId(),
-                notification.getPesan(),
-                notification.isStatusBaca(),
-                notification.getCreatedAt()
-        );
+    @PatchMapping("/{notificationId}/read")
+    public ResponseEntity<Notification> patchTandaiDibaca(@PathVariable Long notificationId) {
+        try {
+            return ResponseEntity.ok(this.notificationService.tandaiDibaca(notificationId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<Void> deleteNotification(@PathVariable Long notificationId) {
+        try {
+            this.notificationService.deleteNotification(notificationId);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

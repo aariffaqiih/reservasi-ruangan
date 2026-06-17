@@ -1,56 +1,46 @@
 package com.tup.reservasi.entity;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+
+import com.tup.reservasi.enums.ReservationStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /*
- * Penanggung jawab: Tadzkiroh Aziziyah Haqia.
- *
- * Arahan dari class-diagram:
- * - Atribut yang perlu disiapkan:
- *   recordId: String
- *   reservation: Reservation
- *   satpam: Satpam
- *   checkInTime: LocalDateTime
- *   checkOutTime: LocalDateTime
- *   catatanPelanggaran: String
- * - Behaviour yang perlu dibuat:
- *   checkIn()
- *   checkOut()
- *   laporkanKendala()
- * - Catatan relasi:
- *   Setiap AccessRecord terhubung ke tepat 1 Reservation.
- *   Setiap AccessRecord ditangani oleh tepat 1 Satpam.
+ * Penanggung jawab: Tadzkiroh Aziziyah Haqia - 103112400242.
+ * Modul: AccessRecord.
  */
 @Entity
 @Table(name = "access_records")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AccessRecord {
 
     @Id
-    @Column(name = "record_id", nullable = false, length = 36)
-    private String recordId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "record_id")
+    private Long recordId;
 
-    @Transient
+    @OneToOne
+    @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
-    @NotBlank(message = "ID reservasi tidak boleh kosong")
-    @Column(name = "reservation_id", nullable = false, length = 36)
-    private String reservationId;
-
-    @Transient
+    @ManyToOne
+    @JoinColumn(name = "satpam_id")
     private Satpam satpam;
-
-    @NotBlank(message = "ID satpam tidak boleh kosong")
-    @Column(name = "satpam_id", nullable = false, length = 50)
-    private String satpamId;
 
     @Column(name = "check_in_time")
     private LocalDateTime checkInTime;
@@ -58,127 +48,33 @@ public class AccessRecord {
     @Column(name = "check_out_time")
     private LocalDateTime checkOutTime;
 
-    @Size(max = 255, message = "Catatan pelanggaran maksimal 255 karakter")
-    @Column(name = "catatan_pelanggaran", length = 255)
+    @Column(name = "catatan_pelanggaran")
     private String catatanPelanggaran;
-
-    public AccessRecord() {
-    }
-
-    public AccessRecord(Reservation reservation, Satpam satpam) {
-        setReservation(reservation);
-        setSatpam(satpam);
-    }
-
-    public static AccessRecord restore(String recordId, String reservationId, String satpamId,
-            LocalDateTime checkInTime, LocalDateTime checkOutTime, String catatanPelanggaran) {
-        AccessRecord record = new AccessRecord();
-        record.recordId = recordId;
-        record.reservationId = reservationId;
-        record.satpamId = satpamId;
-        record.checkInTime = checkInTime;
-        record.checkOutTime = checkOutTime;
-        record.catatanPelanggaran = normalizeText(catatanPelanggaran);
-        return record;
-    }
 
     @PrePersist
     public void prePersist() {
-        if (recordId == null || recordId.isBlank()) {
-            recordId = UUID.randomUUID().toString();
+        if (checkInTime == null && reservation != null && satpam != null) {
+            checkInTime = LocalDateTime.now();
         }
     }
 
     public void checkIn() {
         this.checkInTime = LocalDateTime.now();
+        if (reservation != null) {
+            reservation.ubahStatus(ReservationStatus.ACTIVE);
+            reservation.setAccessRecord(this);
+        }
     }
 
     public void checkOut() {
         this.checkOutTime = LocalDateTime.now();
-    }
-
-    public void laporkanKendala(String catatan) {
-        if (catatan == null || catatan.isBlank()) {
-            throw new IllegalArgumentException("Catatan kendala tidak boleh kosong");
+        if (reservation != null) {
+            reservation.ubahStatus(ReservationStatus.COMPLETED);
+            reservation.setAccessRecord(this);
         }
-        this.catatanPelanggaran = normalizeText(catatan);
     }
 
-    public void laporkanKendala() {
-        laporkanKendala("Kendala tidak spesifik");
-    }
-
-    public String getRecordId() {
-        return recordId;
-    }
-
-    public void setRecordId(String recordId) {
-        this.recordId = recordId;
-    }
-
-    public Reservation getReservation() {
-        return reservation;
-    }
-
-    public void setReservation(Reservation reservation) {
-        this.reservation = reservation;
-        this.reservationId = reservation == null ? null : reservation.getReservationId();
-    }
-
-    public String getReservationId() {
-        return reservationId;
-    }
-
-    public void setReservationId(String reservationId) {
-        this.reservationId = reservationId;
-    }
-
-    public Satpam getSatpam() {
-        return satpam;
-    }
-
-    public void setSatpam(Satpam satpam) {
-        this.satpam = satpam;
-        this.satpamId = satpam == null ? null : satpam.getId();
-    }
-
-    public String getSatpamId() {
-        return satpamId;
-    }
-
-    public void setSatpamId(String satpamId) {
-        this.satpamId = satpamId;
-    }
-
-    public LocalDateTime getCheckInTime() {
-        return checkInTime;
-    }
-
-    public void setCheckInTime(LocalDateTime checkInTime) {
-        this.checkInTime = checkInTime;
-    }
-
-    public LocalDateTime getCheckOutTime() {
-        return checkOutTime;
-    }
-
-    public void setCheckOutTime(LocalDateTime checkOutTime) {
-        this.checkOutTime = checkOutTime;
-    }
-
-    public String getCatatanPelanggaran() {
-        return catatanPelanggaran;
-    }
-
-    public void setCatatanPelanggaran(String catatanPelanggaran) {
-        this.catatanPelanggaran = normalizeText(catatanPelanggaran);
-    }
-
-    private static String normalizeText(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+    public void laporkanKendala(String deskripsi) {
+        this.catatanPelanggaran = deskripsi;
     }
 }

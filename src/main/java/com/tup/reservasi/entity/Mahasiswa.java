@@ -2,118 +2,77 @@ package com.tup.reservasi.entity;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-
-import com.tup.reservasi.auth.UserRole;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Transient;
-
-/*
- * Penanggung jawab: Amelia Sofiana Makharomi.
- *
- * Arahan dari class-diagram:
- * - Mahasiswa harus extends User.
- * - Atribut khusus Mahasiswa:
- *   nim: String
- *   prodi: String
- *   angkatan: int
- * - Behaviour yang perlu dibuat:
- *   ajukanReservasi(): Reservation
- *   batalkanReservasi(): boolean
- *   lihatStatusReservasi(): List<Reservation>
- *   receiveNotification()
- * - Catatan relasi:
- *   Satu Mahasiswa dapat memiliki 0..* Reservation.
- *   Mahasiswa juga menerima Notification melalui kontrak Notifiable jika dipakai final.
- */
-
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/*
+ * Penanggung jawab: Amelia Sofiana Makharomi - 103112400233.
+ * Modul: Mahasiswa.
+ */
 @Entity
-@DiscriminatorValue("MAHASISWA")
+@Table(name = "mahasiswa")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Mahasiswa extends User implements Notifiable {
 
-    @Column(unique = true, length = 30)
+    @Column(name = "nim", unique = true, length = 30)
     private String nim;
 
-    @Column(length = 100)
+    @Column(name = "prodi", length = 100)
     private String prodi;
 
-    @Column
+    @Column(name = "angkatan")
     private int angkatan;
 
-    @Transient
-    private int jumlahNotifikasiDiterima;
+    @JsonIgnore
+    @OneToMany(mappedBy = "mahasiswa")
+    private List<Reservation> reservations = new ArrayList<>();
 
-    @Transient
-    private String notifikasiTerakhir;
+    public Reservation ajukanReservasi(Room room, LocalDate tanggal, LocalTime jamMulai,
+            LocalTime jamSelesai, String tujuan) {
+        Reservation reservation = new Reservation();
+        reservation.setMahasiswa(this);
+        reservation.setRoom(room);
+        reservation.setTanggal(tanggal);
+        reservation.setJamMulai(jamMulai);
+        reservation.setJamSelesai(jamSelesai);
+        reservation.setTujuan(tujuan);
+        reservation.ajukan();
+        this.reservations.add(reservation);
+        return reservation;
+    }
 
-    public Mahasiswa() {
-        super();
-        setRole(UserRole.MAHASISWA);
+    public boolean batalkanReservasi(Long reservationId) {
+        for (Reservation reservation : reservations) {
+            if (reservation.getReservationId() != null
+                    && reservation.getReservationId().equals(reservationId)
+                    && reservation.isCanBeCancelled()) {
+                reservation.batalkan("Dibatalkan mahasiswa");
+                return true;
+            }
+        }
+        return false;
     }
-    public Mahasiswa(
-            String id,
-            String nama,
-            String email,
-            String noHp,
-            String passwordHash,
-            String nim,
-            String prodi,
-            int angkatan) {
 
-        super(id, nama, email, noHp, passwordHash);
-
-        this.nim = nim;
-        this.prodi = prodi;
-        this.angkatan = angkatan;
-        setRole(UserRole.MAHASISWA);
-    }
-    public Reservation ajukanReservasi(Room room, LocalDate tanggal, LocalTime jamMulai, LocalTime jamSelesai, String tujuan) {
-        return new Reservation(this, room, tanggal, jamMulai, jamSelesai, tujuan);
-    }
-    public Reservation ajukanReservasi() {
-        return null;
-    }
-    public boolean batalkanReservasi() {
-        return true;
-    }
     public List<Reservation> lihatStatusReservasi() {
-        return new ArrayList<>();
+        return reservations;
     }
+
     @Override
-    public void receiveNotification(String pesan) {
-        jumlahNotifikasiDiterima++;
-        notifikasiTerakhir = pesan == null || pesan.trim().isEmpty() ? null : pesan.trim();
-    }
-    public void receiveNotification() {
-        receiveNotification(null);
-    }
-    public String getNim() {
-        return nim;
-    }
-    public void setNim(String nim) {
-        this.nim = nim;
-    }
-    public String getProdi() {
-        return prodi;
-    }
-    public void setProdi(String prodi) {
-        this.prodi = prodi;
-    }
-    public int getAngkatan() {
-        return angkatan;
-    }
-    public void setAngkatan(int angkatan) {
-        this.angkatan = angkatan;
-    }
-    public int getJumlahNotifikasiDiterima() {
-        return jumlahNotifikasiDiterima;
-    }
-    public String getNotifikasiTerakhir() {
-        return notifikasiTerakhir;
+    public void receiveNotification(Notification notification) {
+        if (notification != null) {
+            this.getNotifications().add(notification);
+        }
     }
 }

@@ -1,201 +1,209 @@
 package com.tup.reservasi.service;
 
-/*
- * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar.
- *
- * Arahan dari class-diagram:
- * - Service menyimpan/mengelola:
- *   reservations: List<Reservation>
- *   rooms: List<Room>
- * - Behaviour yang perlu dibuat:
- *   createReservation(): Reservation
- *   validateAvailability(): boolean
- *   cancelReservation(): boolean
- *   getReservationHistory(): List<Reservation>
- * - Aturan yang perlu dipikirkan saat coding:
- *   cek Room aktif sebelum reservasi dibuat.
- *   cek tanggal, jamMulai, jamSelesai agar tidak bentrok.
- *   gunakan Reservation.validasiWaktu() untuk validasi jam.
- *   gunakan Reservation.isCanBeCancelled() sebelum membatalkan.
- */
-
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.tup.reservasi.dto.ReservationCancelRequest;
-import com.tup.reservasi.dto.ReservationRequest;
 import com.tup.reservasi.entity.Mahasiswa;
 import com.tup.reservasi.entity.Reservation;
 import com.tup.reservasi.entity.Room;
 import com.tup.reservasi.entity.User;
 import com.tup.reservasi.enums.ReservationStatus;
-import com.tup.reservasi.exception.ReservationException;
+import com.tup.reservasi.repository.AccessRecordRepository;
+import com.tup.reservasi.repository.ApprovalRepository;
+import com.tup.reservasi.repository.NotificationRepository;
 import com.tup.reservasi.repository.ReservationRepository;
 import com.tup.reservasi.repository.RoomRepository;
 import com.tup.reservasi.repository.UserRepository;
 
+/*
+ * Penanggung jawab: Ali Abdul Fattah 'Alim Kautsar - 103112400213.
+ * Modul: ReservationService.
+ */
 @Service
+@Transactional
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
+    private final ApprovalRepository approvalRepository;
+    private final AccessRecordRepository accessRecordRepository;
+    private final NotificationRepository notificationRepository;
+    private final NotificationService notificationService;
+    private final List<Reservation> reservations = new ArrayList<>();
+    private final List<Room> rooms = new ArrayList<>();
 
-    // Hari kerja: reservasi hanya boleh di luar jam kuliah 07:00-17:00
-    private static final LocalTime LECTURE_START = LocalTime.of(7, 0);
-    private static final LocalTime LECTURE_END = LocalTime.of(17, 0);
-
-    public ReservationService(
-            ReservationRepository reservationRepository,
+    public ReservationService(ReservationRepository reservationRepository,
             RoomRepository roomRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ApprovalRepository approvalRepository,
+            AccessRecordRepository accessRecordRepository,
+            NotificationRepository notificationRepository,
+            NotificationService notificationService) {
         this.reservationRepository = reservationRepository;
         this.roomRepository = roomRepository;
         this.userRepository = userRepository;
+        this.approvalRepository = approvalRepository;
+        this.accessRecordRepository = accessRecordRepository;
+        this.notificationRepository = notificationRepository;
+        this.notificationService = notificationService;
     }
 
-    @Transactional
-    public Reservation createReservation(ReservationRequest request) {
-        if (request == null) {
-            throw new ReservationException("Request tidak boleh kosong");
-        }
-        if (request.getMahasiswaId() == null || request.getMahasiswaId().isBlank()) {
-            throw new ReservationException("ID mahasiswa tidak boleh kosong");
-        }
-        if (request.getRoomId() == null || request.getRoomId().isBlank()) {
-            throw new ReservationException("ID ruangan tidak boleh kosong");
-        }
-        if (request.getTujuan() == null || request.getTujuan().isBlank()) {
-            throw new ReservationException("Tujuan reservasi tidak boleh kosong");
-        }
+    @Transactional(readOnly = true)
+    public List<Reservation> getAllReservations() {
+        return this.reservationRepository.findAll();
+    }
 
-        // 1. Cek User/Mahasiswa
-        User user = userRepository.findById(request.getMahasiswaId())
-                .orElseThrow(() -> new ReservationException("Mahasiswa tidak ditemukan"));
-        if (!(user instanceof Mahasiswa mahasiswa)) {
-            throw new ReservationException("User bukan Mahasiswa");
+    @Transactional(readOnly = true)
+    public Reservation getReservationById(Long reservationId) {
+        return this.reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservasi tidak ditemukan"));
+    }
+
+    public Reservation createReservation(Mahasiswa mahasiswa, Room room, LocalDate tanggal,
+            LocalTime jamMulai, LocalTime jamSelesai, String tujuan) {
+        if (!validateAvailability(room, tanggal, jamMulai, jamSelesai)) {
+            throw new RuntimeException("Ruang tidak tersedia");
         }
+        Reservation reservation = mahasiswa.ajukanReservasi(room, tanggal, jamMulai, jamSelesai, tujuan);
+        Reservation saved = this.reservationRepository.save(reservation);
+        this.reservations.add(saved);
+        this.notificationService.sendStatusUpdate(mahasiswa, saved, "Reservasi berhasil diajukan");
+        return saved;
+    }
 
-        // 2. Cek Room aktif
-        Room room = roomRepository.findById(request.getRoomId())
-                .orElseThrow(() -> new ReservationException("Ruangan tidak ditemukan"));
-        if (!room.isStatusAktif()) {
-            throw new ReservationException("Ruangan tidak aktif");
+    public Reservation createReservation(Reservation reservation) {
+        resolveReservationRelations(reservation);
+        if (reservation.getRoom() != null
+                && !validateAvailability(
+                        reservation.getRoom(),
+                        reservation.getTanggal(),
+                        reservation.getJamMulai(),
+                        reservation.getJamSelesai())) {
+            throw new RuntimeException("Ruang tidak tersedia");
         }
-
-        // 3. Validasi Waktu
-        if (!request.validasiWaktu()) {
-            throw new ReservationException("Jam reservasi tidak valid (Jam mulai harus sebelum jam selesai)");
-        }
-
-        LocalDate tanggal = request.getTanggal();
-        LocalTime jamMulai = request.getJamMulai();
-        LocalTime jamSelesai = request.getJamSelesai();
-
-        if (tanggal == null || tanggal.isBefore(LocalDate.now())) {
-            throw new ReservationException("Tanggal reservasi tidak boleh di masa lalu");
-        }
-
-        // Hari kerja: reservasi hanya boleh di luar jam kuliah 07:00-17:00
-        DayOfWeek dayOfWeek = tanggal.getDayOfWeek();
-        if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
-            boolean isOutsideLectureHours = jamSelesai.isBefore(LECTURE_START) || jamSelesai.equals(LECTURE_START)
-                    || jamMulai.isAfter(LECTURE_END) || jamMulai.equals(LECTURE_END);
-            if (!isOutsideLectureHours) {
-                throw new ReservationException("Pada hari kerja, reservasi hanya boleh dilakukan di luar jam kuliah 07:00-17:00");
-            }
-        }
-
-        // Validasi bentrok
-        if (!validateAvailability(room.getRoomId(), tanggal, jamMulai, jamSelesai)) {
-            throw new ReservationException("Jadwal bentrok dengan reservasi lain");
-        }
-
-        // 4. Buat Reservasi
-        Reservation reservation = new Reservation(
-                mahasiswa,
-                room,
-                tanggal,
-                jamMulai,
-                jamSelesai,
-                request.getTujuan()
-        );
-
-        // Gunakan Reservation.validasiWaktu() untuk validasi internal jam
-        if (!reservation.validasiWaktu()) {
-            throw new ReservationException("Validasi waktu internal reservasi gagal");
-        }
-
-        // Ajukan reservasi (pindah status ke PENDING)
         reservation.ajukan();
-
-        return reservationRepository.save(reservation);
+        Reservation saved = this.reservationRepository.save(reservation);
+        this.reservations.add(saved);
+        if (saved.getMahasiswa() != null) {
+            this.notificationService.sendStatusUpdate(saved.getMahasiswa(), saved, "Reservasi berhasil diajukan");
+        }
+        return saved;
     }
 
-    public boolean validateAvailability(String roomId, LocalDate tanggal, LocalTime jamMulai, LocalTime jamSelesai) {
-        if (roomId == null || tanggal == null || jamMulai == null || jamSelesai == null || !jamMulai.isBefore(jamSelesai)) {
+    public Reservation updateReservation(Long reservationId, Reservation updatedData) {
+        resolveReservationRelations(updatedData);
+        Reservation reservationExisting = getReservationById(reservationId);
+        reservationExisting.setMahasiswa(updatedData.getMahasiswa());
+        reservationExisting.setRoom(updatedData.getRoom());
+        reservationExisting.setTanggal(updatedData.getTanggal());
+        reservationExisting.setJamMulai(updatedData.getJamMulai());
+        reservationExisting.setJamSelesai(updatedData.getJamSelesai());
+        reservationExisting.setTujuan(updatedData.getTujuan());
+        reservationExisting.setStatus(updatedData.getStatus());
+        return this.reservationRepository.save(reservationExisting);
+    }
+
+    public void deleteReservation(Long reservationId) {
+        if (!this.reservationRepository.existsById(reservationId)) {
+            throw new RuntimeException("Reservasi tidak ditemukan");
+        }
+        deleteReservationRelations(reservationId);
+        this.reservationRepository.deleteByReservationId(reservationId);
+    }
+
+    public Reservation createReservation(Long mahasiswaId, Long roomId, LocalDate tanggal,
+            LocalTime jamMulai, LocalTime jamSelesai, String tujuan) {
+        User user = this.userRepository.findById(mahasiswaId)
+                .orElseThrow(() -> new RuntimeException("Mahasiswa tidak ditemukan"));
+        if (!(user instanceof Mahasiswa mahasiswa)) {
+            throw new RuntimeException("User bukan Mahasiswa");
+        }
+        Room room = this.roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room tidak ditemukan"));
+        return createReservation(mahasiswa, room, tanggal, jamMulai, jamSelesai, tujuan);
+    }
+
+    public boolean validateAvailability(Room room, LocalDate tanggal, LocalTime jamMulai, LocalTime jamSelesai) {
+        if (room == null || !room.isStatusAktif()) {
             return false;
         }
-
-        // Status yang memblokir jadwal: PENDING, APPROVED, ACTIVE
-        Collection<ReservationStatus> blockingStatuses = List.of(
+        if (tanggal == null || jamMulai == null || jamSelesai == null || !jamSelesai.isAfter(jamMulai)) {
+            return false;
+        }
+        List<ReservationStatus> statuses = List.of(
                 ReservationStatus.PENDING,
                 ReservationStatus.APPROVED,
-                ReservationStatus.ACTIVE
-        );
-
-        List<Reservation> overlapping = reservationRepository.findOverlappingReservations(
-                roomId,
-                tanggal,
-                jamMulai,
-                jamSelesai,
-                blockingStatuses
-        );
-
-        return overlapping.isEmpty();
+                ReservationStatus.ACTIVE);
+        return this.reservationRepository
+                .findOverlappingReservations(room.getRoomId(), tanggal, jamMulai, jamSelesai, statuses)
+                .isEmpty();
     }
 
-    @Transactional
-    public boolean cancelReservation(ReservationCancelRequest request) {
-        if (request == null || request.getReservationId() == null) {
-            throw new ReservationException("Request pembatalan tidak valid");
-        }
-
-        Reservation reservation = reservationRepository.findById(request.getReservationId())
-                .orElseThrow(() -> new ReservationException("Reservasi tidak ditemukan"));
-
+    public boolean cancelReservation(Long reservationId, String alasan) {
+        Reservation reservation = getReservationById(reservationId);
         if (!reservation.isCanBeCancelled()) {
-            throw new ReservationException("Reservasi tidak dapat dibatalkan pada status " + reservation.getStatus());
+            return false;
         }
-
-        String alasan = request.hasAlasanPembatalan() ? request.getAlasanPembatalan() : "Dibatalkan oleh mahasiswa";
         reservation.batalkan(alasan);
-        reservationRepository.save(reservation);
+        this.reservationRepository.save(reservation);
+        if (reservation.getMahasiswa() != null) {
+            this.notificationService.sendStatusUpdate(reservation.getMahasiswa(), reservation, "Reservasi dibatalkan");
+        }
         return true;
     }
 
-    public List<Reservation> getReservationHistory(String mahasiswaId) {
-        if (mahasiswaId == null) {
-            throw new ReservationException("ID mahasiswa tidak boleh kosong");
-        }
-        return reservationRepository.findByMahasiswaId(mahasiswaId);
+    @Transactional(readOnly = true)
+    public List<Reservation> getReservationHistory(Long userId) {
+        return this.reservationRepository.findByMahasiswa_Id(userId);
     }
 
-    public List<Reservation> getReservationHistory() {
-        return reservationRepository.findAll();
+    public List<Reservation> getReservations() {
+        return this.reservations;
     }
 
-    public Optional<Reservation> getReservationById(String reservationId) {
-        if (reservationId == null) {
-            return Optional.empty();
+    public List<Room> getRooms() {
+        this.rooms.clear();
+        this.rooms.addAll(this.roomRepository.findAll());
+        return this.rooms;
+    }
+
+    private void resolveReservationRelations(Reservation reservation) {
+        if (reservation == null) {
+            return;
         }
-        return reservationRepository.findById(reservationId);
+        reservation.setMahasiswa(resolveMahasiswa(reservation.getMahasiswa()));
+        reservation.setRoom(resolveRoom(reservation.getRoom()));
+    }
+
+    private Mahasiswa resolveMahasiswa(Mahasiswa mahasiswa) {
+        if (mahasiswa == null || mahasiswa.getId() == null) {
+            return mahasiswa;
+        }
+        User user = this.userRepository.findById(mahasiswa.getId())
+                .orElseThrow(() -> new RuntimeException("Mahasiswa tidak ditemukan"));
+        if (!(user instanceof Mahasiswa resolvedMahasiswa)) {
+            throw new RuntimeException("User bukan Mahasiswa");
+        }
+        return resolvedMahasiswa;
+    }
+
+    private Room resolveRoom(Room room) {
+        if (room == null || room.getRoomId() == null) {
+            return room;
+        }
+        return this.roomRepository.findById(room.getRoomId())
+                .orElseThrow(() -> new RuntimeException("Room tidak ditemukan"));
+    }
+
+    private void deleteReservationRelations(Long reservationId) {
+        this.notificationRepository.deleteByReservationId(reservationId);
+        this.accessRecordRepository.deleteByReservationId(reservationId);
+        this.approvalRepository.deleteByReservationId(reservationId);
     }
 }

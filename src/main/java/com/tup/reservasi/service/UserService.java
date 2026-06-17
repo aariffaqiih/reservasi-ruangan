@@ -1,174 +1,120 @@
 package com.tup.reservasi.service;
 
-/*
- * Penanggung jawab: Amelia Sofiana Makharomi.
- *
- * Arahan dari class-diagram:
- * - Service ini menangani behaviour umum User:
- *   login(): boolean
- *   logout()
- *   ubahProfil()
- * - Data yang terkait:
- *   id, nama, email, noHp, passwordHash.
- * - Aturan yang perlu dipikirkan saat coding:
- *   perubahan profil tidak boleh mengubah passwordHash tanpa flow khusus.
- *   response profil tidak boleh mengirim passwordHash.
- *   untuk Mahasiswa, ikut kelola nim, prodi, dan angkatan.
- */
-
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.tup.reservasi.auth.UserRole;
-import com.tup.reservasi.dto.ProfileUpdateRequest;
-import com.tup.reservasi.dto.RegistrationRequest;
-import com.tup.reservasi.dto.UserResponse;
+import com.tup.reservasi.entity.Admin;
 import com.tup.reservasi.entity.Mahasiswa;
+import com.tup.reservasi.entity.Satpam;
 import com.tup.reservasi.entity.User;
 import com.tup.reservasi.repository.UserRepository;
 
+/*
+ * Penanggung jawab: Amelia Sofiana Makharomi - 103112400233.
+ * Modul: User dan Mahasiswa.
+ */
 @Service
+@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
     }
+
+    @Transactional(readOnly = true)
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return this.userRepository.findAll();
     }
-    public List<UserResponse> getAllUserResponses() {
-        return userRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .toList();
+
+    @Transactional(readOnly = true)
+    public User getUserById(Long id) {
+        return this.userRepository.findById(id).orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
     }
-    public Optional<User> getById(String id) {
-        return userRepository.findById(id);
+
+    @Transactional(readOnly = true)
+    public Optional<User> getUserByEmail(String email) {
+        return this.userRepository.findByEmail(email);
     }
-    public UserResponse getResponseById(String id) {
-        return userRepository.findById(id)
-                .map(this::toResponse)
-                .orElseThrow(() -> new IllegalArgumentException("User tidak ditemukan"));
+
+    @Transactional(readOnly = true)
+    public Optional<User> getUserByNoHp(String noHp) {
+        return this.userRepository.findByNoHp(noHp);
     }
-    public Optional<User> getByEmail(String email) {
-        return userRepository.findByEmail(email);
+
+    @Transactional(readOnly = true)
+    public List<User> getUserByNamaContaining(String nama) {
+        return this.userRepository.findByNamaContaining(nama);
     }
-    public Optional<User> getByNoHp(String noHp) {
-        return userRepository.findByNoHp(noHp);
+
+    public User createUser(User user) {
+        return this.userRepository.save(user);
     }
-    @Transactional
-    public UserResponse register(RegistrationRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Request registrasi tidak boleh kosong");
+
+    public User updateUser(Long id, User updatedData) {
+        User userExisting = getUserById(id);
+        userExisting.ubahProfil(updatedData.getNama(), updatedData.getEmail(), updatedData.getNoHp());
+        return this.userRepository.save(userExisting);
+    }
+
+    public Mahasiswa updateMahasiswa(Long id, Mahasiswa updatedData) {
+        User userExisting = getUserById(id);
+        if (!(userExisting instanceof Mahasiswa mahasiswaExisting)) {
+            throw new RuntimeException("User bukan Mahasiswa");
         }
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email sudah digunakan");
+        mahasiswaExisting.ubahProfil(updatedData.getNama(), updatedData.getEmail(), updatedData.getNoHp());
+        if (updatedData.getNim() != null) {
+            mahasiswaExisting.setNim(updatedData.getNim());
         }
-        if (request.getNoHp() != null && !request.getNoHp().isBlank()
-                && userRepository.findByNoHp(request.getNoHp()).isPresent()) {
-            throw new IllegalArgumentException("Nomor HP sudah digunakan");
+        if (updatedData.getProdi() != null) {
+            mahasiswaExisting.setProdi(updatedData.getProdi());
         }
-
-        UserRole role = parseRole(request.getRole());
-        if (role != UserRole.MAHASISWA) {
-            throw new IllegalArgumentException("Registrasi starter hanya mendukung role MAHASISWA");
+        if (updatedData.getAngkatan() > 0) {
+            mahasiswaExisting.setAngkatan(updatedData.getAngkatan());
         }
-
-        Mahasiswa mahasiswa = new Mahasiswa(
-                null,
-                request.getNama(),
-                request.getEmail(),
-                request.getNoHp(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getNim(),
-                request.getProdi(),
-                request.getAngkatan() == null ? 0 : request.getAngkatan());
-
-        return toResponse(userRepository.save(mahasiswa));
+        return this.userRepository.save(mahasiswaExisting);
     }
-    public User simpan(User user) {
-        return userRepository.save(user);
-    }
-    @Transactional
-    public UserResponse updateProfile(String id, ProfileUpdateRequest request) {
-        if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("ID user tidak boleh kosong");
+
+    public Admin updateAdmin(Long id, Admin updatedData) {
+        User userExisting = getUserById(id);
+        if (!(userExisting instanceof Admin adminExisting)) {
+            throw new RuntimeException("User bukan Admin");
         }
-        if (request == null) {
-            throw new IllegalArgumentException("Request profil tidak boleh kosong");
-        }
-
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User tidak ditemukan"));
-
-        userRepository.findByEmail(request.getEmail())
-                .filter(existing -> !existing.getId().equals(user.getId()))
-                .ifPresent(existing -> {
-                    throw new IllegalArgumentException("Email sudah digunakan");
-                });
-
-        if (request.getNoHp() != null && !request.getNoHp().isBlank()) {
-            userRepository.findByNoHp(request.getNoHp())
-                    .filter(existing -> !existing.getId().equals(user.getId()))
-                    .ifPresent(existing -> {
-                        throw new IllegalArgumentException("Nomor HP sudah digunakan");
-                    });
-        }
-
-        user.setNama(request.getNama());
-        user.setEmail(request.getEmail());
-        user.setNoHp(request.getNoHp());
-
-        if (user instanceof Mahasiswa mahasiswa) {
-            mahasiswa.setProdi(request.getProdi());
-            if (request.getAngkatan() != null) {
-                mahasiswa.setAngkatan(request.getAngkatan());
-            }
-        }
-
-        return toResponse(userRepository.save(user));
+        adminExisting.ubahProfil(updatedData.getNama(), updatedData.getEmail(), updatedData.getNoHp());
+        adminExisting.setUnitKerja(updatedData.getUnitKerja());
+        return this.userRepository.save(adminExisting);
     }
-    public boolean login() {
-        return true;
-    }
-    public void logout() {
-        System.out.println("User logout");
-    }
-    public void ubahProfil(User user) {
-        userRepository.save(user);
-    }
-    public UserResponse toResponse(User user) {
-        if (user == null) {
-            return null;
-        }
 
-        UserResponse response = new UserResponse();
-        response.setId(user.getId());
-        response.setNama(user.getNama());
-        response.setEmail(user.getEmail());
-        response.setNoHp(user.getNoHp());
-
-        if (user instanceof Mahasiswa mahasiswa) {
-            response.setNim(mahasiswa.getNim());
-            response.setProdi(mahasiswa.getProdi());
-            response.setAngkatan(mahasiswa.getAngkatan());
+    public Satpam updateSatpam(Long id, Satpam updatedData) {
+        User userExisting = getUserById(id);
+        if (!(userExisting instanceof Satpam satpamExisting)) {
+            throw new RuntimeException("User bukan Satpam");
         }
+        satpamExisting.ubahProfil(updatedData.getNama(), updatedData.getEmail(), updatedData.getNoHp());
+        satpamExisting.setPosJaga(updatedData.getPosJaga());
+        satpamExisting.setShift(updatedData.getShift());
+        return this.userRepository.save(satpamExisting);
+    }
 
-        return response;
+    public void deleteUser(Long id) {
+        User userExisting = getUserById(id);
+        this.userRepository.delete(userExisting);
     }
-    private UserRole parseRole(String role) {
-        if (role == null || role.isBlank()) {
-            return UserRole.MAHASISWA;
-        }
-        return UserRole.valueOf(role.trim().toUpperCase(Locale.ROOT));
+
+    @Transactional(readOnly = true)
+    public Long countUsers() {
+        return this.userRepository.count();
     }
+
+    @Transactional(readOnly = true)
+    public boolean login(String email, String password) {
+        return this.userRepository.findByEmail(email)
+                .map(user -> user.login(email, password))
+                .orElse(false);
+    }
+
 }

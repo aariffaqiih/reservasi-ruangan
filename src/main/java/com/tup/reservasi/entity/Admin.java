@@ -1,104 +1,71 @@
 package com.tup.reservasi.entity;
 
-import com.tup.reservasi.auth.UserRole;
-import com.tup.reservasi.enums.ReservationStatus;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /*
- * Penanggung jawab: Atha Muyassar.
- *
- * Arahan dari class-diagram:
- * - Admin harus extends User.
- * - Admin mengimplementasikan behaviour Notifiable.
- * - Atribut khusus Admin:
- *   unitKerja: String
- * - Behaviour yang perlu dibuat:
- *   verifikasiReservasi(): boolean
- *   setujuiReservasi(): Approval
- *   tolakReservasi(): Approval
- *   mintaRevisiData(): Approval
- *   receiveNotification()
- * - Catatan relasi:
- *   Satu Admin menangani 0..* Approval.
- *   Setiap Approval ditangani oleh tepat 1 Admin.
+ * Penanggung jawab: Atha Muyassar - 103112430185.
+ * Modul: Admin.
  */
-
+@Entity
+@Table(name = "admins")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Admin extends User implements Notifiable {
 
+    @Column(name = "unit_kerja", length = 100)
     private String unitKerja;
-    private int jumlahNotifikasiDiterima;
-    private String notifikasiTerakhir;
 
-    public Admin() {
-        super();
-    }
-
-    public Admin(String id, String nama, String email, String noHp, String passwordHash, String unitKerja) {
-        super(id, nama, email, noHp, passwordHash);
-        this.unitKerja = normalizeText(unitKerja);
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "admin")
+    private List<Approval> approvals = new ArrayList<>();
 
     public boolean verifikasiReservasi(Reservation reservation) {
-        return reservation != null
-                && reservation.getStatus() == ReservationStatus.PENDING
-                && reservation.validasiWaktu();
+        return reservation != null && reservation.validasiWaktu();
     }
 
-    public boolean setujuiReservasi(Reservation reservation, String catatan) {
-        return prosesKeputusan(reservation, ReservationStatus.APPROVED);
+    public Approval setujuiReservasi(Reservation reservation, String catatan) {
+        Approval approval = new Approval();
+        approval.setReservation(reservation);
+        approval.setAdmin(this);
+        approval.setujui(catatan);
+        this.approvals.add(approval);
+        return approval;
     }
 
-    public boolean tolakReservasi(Reservation reservation, String catatan) {
-        return prosesKeputusan(reservation, ReservationStatus.REJECTED);
+    public Approval tolakReservasi(Reservation reservation, String catatan) {
+        Approval approval = new Approval();
+        approval.setReservation(reservation);
+        approval.setAdmin(this);
+        approval.tolak(catatan);
+        this.approvals.add(approval);
+        return approval;
     }
 
-    public boolean mintaRevisiData(Reservation reservation, String catatan) {
-        return prosesKeputusan(reservation, ReservationStatus.REJECTED);
+    public Approval mintaRevisiData(Reservation reservation, String catatan) {
+        Approval approval = new Approval();
+        approval.setReservation(reservation);
+        approval.setAdmin(this);
+        approval.mintaRevisi(catatan);
+        this.approvals.add(approval);
+        return approval;
     }
 
     @Override
-    public void receiveNotification(String pesan) {
-        jumlahNotifikasiDiterima++;
-        notifikasiTerakhir = normalizeText(pesan);
-    }
-
-    public UserRole getRole() {
-        return UserRole.ADMIN;
-    }
-
-    public String getDashboardPath() {
-        return "/admin/dashboard";
-    }
-
-    public String getUnitKerja() {
-        return unitKerja;
-    }
-
-    public void setUnitKerja(String unitKerja) {
-        this.unitKerja = normalizeText(unitKerja);
-    }
-
-    public int getJumlahNotifikasiDiterima() {
-        return jumlahNotifikasiDiterima;
-    }
-
-    public String getNotifikasiTerakhir() {
-        return notifikasiTerakhir;
-    }
-
-    private boolean prosesKeputusan(Reservation reservation, ReservationStatus statusBaru) {
-        if (!verifikasiReservasi(reservation)) {
-            return false;
+    public void receiveNotification(Notification notification) {
+        if (notification != null) {
+            this.getNotifications().add(notification);
         }
-
-        reservation.ubahStatus(statusBaru);
-        return true;
-    }
-
-    private static String normalizeText(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
     }
 }

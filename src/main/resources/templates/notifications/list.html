@@ -1,38 +1,87 @@
 <!DOCTYPE html>
+<!--
+    Penanggung jawab: Ajda Mutiara Zahra - 103112400210.
+    Modul: Notification.
+-->
 <html lang="id" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
     <title>Notifikasi</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="app-shell">
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    <div class="app-frame">
         <aside class="sidebar">
-            <div class="brand"><span class="brand-icon">□</span><span>Peminjaman<br>Ruang Kelas</span></div>
-            <nav class="nav-menu">
-                <a class="nav-item" th:href="@{/dashboard}">Dashboard</a>
-                <a class="nav-item active" th:href="@{/api/notifications}">Notifikasi</a>
-                <a class="nav-item" th:href="@{/api/users/profile}">Pengaturan</a>
+            <a class="brand" th:href="@{/}">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span><span class="brand-name">Peminjaman Ruang Kelas</span><span class="brand-kicker">Panel Mahasiswa</span></span>
+            </a>
+            <nav aria-label="Navigasi utama">
+                <ul class="nav-list">
+                    <li><a class="nav-link" th:href="@{/mahasiswa/dashboard}"><span class="nav-icon icon-dashboard" aria-hidden="true"></span>Dashboard</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/reservations/form}"><span class="nav-icon icon-reservation" aria-hidden="true"></span>Peminjaman</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/reservations}"><span class="nav-icon icon-approval" aria-hidden="true"></span>Riwayat</a></li>
+                    <li><a class="nav-link" th:href="@{/mahasiswa/rooms}"><span class="nav-icon icon-room" aria-hidden="true"></span>Ruang Kelas</a></li>
+                    <li><a class="nav-link is-active" th:href="@{/mahasiswa/notifications}"><span class="nav-icon icon-notification" aria-hidden="true"></span>Notifikasi</a></li>
+                </ul>
             </nav>
-        </aside>
-        <main class="page">
-            <div class="page-inner">
-                <div class="topbar">
-                    <div class="page-title"><span class="eyebrow">7. Notifikasi</span><h1>Notifikasi</h1><p>Semua notifikasi terkait peminjaman ruang kelas.</p></div>
-                    <div class="stat-icon tone-red">3</div>
-                </div>
-                <section class="card notification-list">
-                    <article class="notification-item" th:each="notification : ${notifications}">
-                        <span class="status-dot tone-green">✓</span>
-                        <div><strong th:text="${notification.pesan}">Peminjaman REK-201 disetujui</strong><p class="muted" th:text="${notification.penerimaId}">mhs</p></div>
-                        <span class="muted" th:text="${notification.createdAt}">2 menit lalu</span>
-                    </article>
-                    <article class="notification-item" th:if="${notifications == null or #lists.isEmpty(notifications)}"><span class="status-dot tone-green">✓</span><div><strong>Peminjaman REK-201 disetujui</strong><p class="muted">Kegiatan: Rapat Himpunan</p></div><span class="muted">2 menit lalu</span></article>
-                    <article class="notification-item" th:if="${notifications == null or #lists.isEmpty(notifications)}"><span class="status-dot tone-orange">◷</span><div><strong>Peminjaman DC-306 sedang menunggu persetujuan</strong><p class="muted">Kegiatan: Diskusi Kelompok</p></div><span class="muted">10 menit lalu</span></article>
-                    <article class="notification-item" th:if="${notifications == null or #lists.isEmpty(notifications)}"><span class="status-dot tone-red">×</span><div><strong>Peminjaman DSP-506 ditolak</strong><p class="muted">Alasan: ruangan sudah digunakan</p></div><span class="muted">2 jam lalu</span></article>
-                </section>
+            <div class="sidebar-help">
+                <strong>Pembaruan</strong>
+                <p>Notifikasi membantu memantau perubahan status reservasi.</p>
             </div>
+        </aside>
+
+        <main class="app-main" id="main-content">
+            <section class="page-hero" aria-labelledby="page-title">
+                <div class="page-title-card">
+                    <span class="eyebrow">7. Notifikasi</span>
+                    <h1 id="page-title">Notifikasi</h1>
+                    <p>Daftar notifikasi terbaru yang tersimpan di database untuk penerima terkait.</p>
+                </div>
+            </section>
+
+            <div class="top-actions">
+                <a class="button secondary" th:href="@{/mahasiswa/dashboard}">Dashboard</a>
+            </div>
+
+            <section class="table-card" aria-labelledby="notification-table-title">
+                <div class="table-card-header">
+                    <h2 id="notification-table-title">Daftar Notifikasi</h2>
+                    <span class="pill status-info">Info</span>
+                </div>
+                <div class="table-shell">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Penerima</th>
+                                <th>Pesan</th>
+                                <th>Status Baca</th>
+                                <th>Dibuat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="notification : ${notifications}">
+                                <td th:text="${notification.notificationId}">N001</td>
+                                <td th:text="${notification.penerimaId}">User</td>
+                                <td th:text="${notification.pesan}">Pesan</td>
+                                <td>
+                                    <span class="status-badge"
+                                          th:classappend="${notification.statusBaca ? ' status-success' : ' status-info'}"
+                                          th:text="${notification.statusBaca ? 'Dibaca' : 'Belum dibaca'}">Belum dibaca</span>
+                                </td>
+                                <td th:text="${notification.createdAt}">2026-06-12</td>
+                            </tr>
+                            <tr th:if="${notifications == null or #lists.isEmpty(notifications)}">
+                                <td colspan="5">Belum ada notifikasi.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 </body>

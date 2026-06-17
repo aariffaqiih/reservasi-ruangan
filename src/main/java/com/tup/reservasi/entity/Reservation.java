@@ -3,7 +3,10 @@ package com.tup.reservasi.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import com.tup.reservasi.enums.ReservationStatus;
 
@@ -11,262 +14,110 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /*
- * Penanggung jawab: 'Aarif Rahmaan Jalaluddin Faqiih.
- *
- * Reservation menjadi pusat alur reservasi:
- * DRAFT -> PENDING -> APPROVED/REJECTED -> ACTIVE -> COMPLETED.
- * Pembatalan hanya boleh dari DRAFT, PENDING, atau APPROVED.
+ * Penanggung jawab: Aarif Rahmaan Jalaluddin Faqiih - 103112430182.
+ * Modul: Reservation.
  */
 @Entity
 @Table(name = "reservations")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Reservation {
 
     @Id
-    @Column(name = "reservation_id", nullable = false, length = 36)
-    private String reservationId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "reservation_id")
+    private Long reservationId;
 
-    /*
-     * Relasi object disiapkan untuk kebutuhan domain.
-     * ID disimpan eksplisit agar class ini tetap aman saat Mahasiswa dan Room
-     * belum sepenuhnya menjadi JPA entity final.
-     */
-    @Transient
+    @ManyToOne
+    @JoinColumn(name = "mahasiswa_id")
     private Mahasiswa mahasiswa;
 
-    @Column(name = "mahasiswa_id", nullable = false, length = 50)
-    private String mahasiswaId;
-
-    @Transient
+    @ManyToOne
+    @JoinColumn(name = "room_id")
     private Room room;
 
-    @Column(name = "room_id", nullable = false, length = 50)
-    private String roomId;
-
-    @NotNull(message = "Tanggal reservasi tidak boleh kosong")
-    @Column(name = "tanggal", nullable = false)
+    @Column(name = "tanggal")
     private LocalDate tanggal;
 
-    @NotNull(message = "Jam mulai tidak boleh kosong")
-    @Column(name = "jam_mulai", nullable = false)
+    @Column(name = "jam_mulai")
     private LocalTime jamMulai;
 
-    @NotNull(message = "Jam selesai tidak boleh kosong")
-    @Column(name = "jam_selesai", nullable = false)
+    @Column(name = "jam_selesai")
     private LocalTime jamSelesai;
 
-    @NotBlank(message = "Tujuan reservasi tidak boleh kosong")
-    @Size(max = 255, message = "Tujuan reservasi maksimal 255 karakter")
-    @Column(name = "tujuan", nullable = false, length = 255)
+    @Column(name = "tujuan")
     private String tujuan;
 
-    @NotNull(message = "Status reservasi tidak boleh kosong")
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private ReservationStatus status = ReservationStatus.DRAFT;
+    @Column(name = "status")
+    private ReservationStatus status;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
-    @Size(max = 255, message = "Alasan pembatalan maksimal 255 karakter")
-    @Column(name = "alasan_pembatalan", length = 255)
-    private String alasanPembatalan;
+    @OneToOne(mappedBy = "reservation")
+    @JsonIgnore
+    private Approval approval;
 
-    public Reservation() {
-    }
+    @OneToOne(mappedBy = "reservation")
+    @JsonIgnore
+    private AccessRecord accessRecord;
 
-    public Reservation(Mahasiswa mahasiswa, Room room, LocalDate tanggal, LocalTime jamMulai, LocalTime jamSelesai,
-            String tujuan) {
-        setMahasiswa(mahasiswa);
-        setRoom(room);
-        this.tanggal = tanggal;
-        this.jamMulai = jamMulai;
-        this.jamSelesai = jamSelesai;
-        this.tujuan = normalizeText(tujuan);
-        this.status = ReservationStatus.DRAFT;
-    }
-
-    public static Reservation restore(String reservationId, String mahasiswaId, String roomId, LocalDate tanggal,
-            LocalTime jamMulai, LocalTime jamSelesai, String tujuan, ReservationStatus status,
-            LocalDateTime createdAt, LocalDateTime cancelledAt, String alasanPembatalan) {
-        Reservation reservation = new Reservation();
-        reservation.reservationId = reservationId;
-        reservation.mahasiswaId = mahasiswaId;
-        reservation.roomId = roomId;
-        reservation.tanggal = tanggal;
-        reservation.jamMulai = jamMulai;
-        reservation.jamSelesai = jamSelesai;
-        reservation.tujuan = normalizeText(tujuan);
-        reservation.status = status == null ? ReservationStatus.DRAFT : status;
-        reservation.createdAt = createdAt;
-        reservation.cancelledAt = cancelledAt;
-        reservation.alasanPembatalan = normalizeText(alasanPembatalan);
-        return reservation;
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "reservation")
+    private List<Notification> notifications = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
-        if (reservationId == null || reservationId.isBlank()) {
-            reservationId = UUID.randomUUID().toString();
-        }
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
-        }
-        if (status == null) {
-            status = ReservationStatus.DRAFT;
         }
     }
 
     public void ajukan() {
-        ubahStatus(ReservationStatus.PENDING);
+        this.status = ReservationStatus.PENDING;
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
     }
 
     public void ubahStatus(ReservationStatus statusBaru) {
-        if (statusBaru == null) {
-            throw new IllegalArgumentException("Status baru tidak boleh kosong");
-        }
-        if (!status.canMoveTo(statusBaru)) {
-            throw new IllegalStateException("Transisi status tidak valid: " + status + " -> " + statusBaru);
-        }
-        status = statusBaru;
+        this.status = statusBaru;
     }
 
     public void batalkan(String alasan) {
-        if (!isCanBeCancelled()) {
-            throw new IllegalStateException("Reservasi dengan status " + status + " tidak dapat dibatalkan");
-        }
-        status = ReservationStatus.CANCELLED;
-        cancelledAt = LocalDateTime.now();
-        alasanPembatalan = normalizeText(alasan);
+        this.status = ReservationStatus.CANCELLED;
+        this.cancelledAt = LocalDateTime.now();
     }
 
     public boolean validasiWaktu() {
         return tanggal != null
                 && jamMulai != null
                 && jamSelesai != null
-                && jamMulai.isBefore(jamSelesai);
+                && jamSelesai.isAfter(jamMulai);
     }
 
     public boolean isCanBeCancelled() {
-        return status != null && status.canBeCancelled();
-    }
-
-    public boolean overlaps(LocalDate tanggalLain, LocalTime mulaiLain, LocalTime selesaiLain) {
-        if (tanggalLain == null || mulaiLain == null || selesaiLain == null || !validasiWaktu()) {
-            return false;
-        }
-
-        return tanggal.equals(tanggalLain)
-                && jamMulai.isBefore(selesaiLain)
-                && mulaiLain.isBefore(jamSelesai);
-    }
-
-    public boolean blocksRoomSchedule() {
-        return status != null && status.blocksRoomSchedule();
-    }
-
-    public String getReservationId() {
-        return reservationId;
-    }
-
-    public Mahasiswa getMahasiswa() {
-        return mahasiswa;
-    }
-
-    public void setMahasiswa(Mahasiswa mahasiswa) {
-        this.mahasiswa = mahasiswa;
-        this.mahasiswaId = mahasiswa == null ? null : mahasiswa.getId();
-    }
-
-    public String getMahasiswaId() {
-        return mahasiswaId;
-    }
-
-    public void setMahasiswaId(String mahasiswaId) {
-        this.mahasiswaId = mahasiswaId;
-    }
-
-    public Room getRoom() {
-        return room;
-    }
-
-    public void setRoom(Room room) {
-        this.room = room;
-        this.roomId = room == null ? null : room.getRoomId();
-    }
-
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
-    }
-
-    public LocalDate getTanggal() {
-        return tanggal;
-    }
-
-    public void setTanggal(LocalDate tanggal) {
-        this.tanggal = tanggal;
-    }
-
-    public LocalTime getJamMulai() {
-        return jamMulai;
-    }
-
-    public void setJamMulai(LocalTime jamMulai) {
-        this.jamMulai = jamMulai;
-    }
-
-    public LocalTime getJamSelesai() {
-        return jamSelesai;
-    }
-
-    public void setJamSelesai(LocalTime jamSelesai) {
-        this.jamSelesai = jamSelesai;
-    }
-
-    public String getTujuan() {
-        return tujuan;
-    }
-
-    public void setTujuan(String tujuan) {
-        this.tujuan = normalizeText(tujuan);
-    }
-
-    public ReservationStatus getStatus() {
-        return status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getCancelledAt() {
-        return cancelledAt;
-    }
-
-    public String getAlasanPembatalan() {
-        return alasanPembatalan;
-    }
-
-    private static String normalizeText(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return status == ReservationStatus.DRAFT
+                || status == ReservationStatus.PENDING
+                || status == ReservationStatus.APPROVED;
     }
 }
