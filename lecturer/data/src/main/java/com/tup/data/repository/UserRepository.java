@@ -15,16 +15,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // SELECT * FROM users WHERE email = ?
     Optional<User> findByEmail(String email);
 
-    // → SELECT * FROM users WHERE name LIKE '%keyword%'
+    // SELECT * FROM users WHERE name LIKE '%keyword%'
     List<User> findByNameContaining(String keyword);
 
-    // ===== CUSTOM QUERY JPQL =====
+    // CUSTOM QUERY JPQL
     @Query("SELECT u FROM User u WHERE u.phone = :phone")
     Optional<User> findUserByPhone(@Param("phone") String phone);
 
-    // ===== NATIVE QUERY (SQL murni) =====
+    // NATIVE QUERY (SQL murni)
     @Query(value = "SELECT * FROM users WHERE created_at >= :date", nativeQuery = true)
     List<User> findUsersCreatedAfter(@Param("date") java.time.LocalDateTime date);
-
 
 }
