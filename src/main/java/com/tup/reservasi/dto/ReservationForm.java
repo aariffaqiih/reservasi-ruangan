@@ -11,10 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/*
- * Form DTO agar validasi Spring MVC mengikuti materi dosen:
- * @Valid membaca anotasi validasi, BindingResult menampung error.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

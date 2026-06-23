@@ -10,10 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/*
- * Form DTO profil mahasiswa supaya entity tetap mengikuti BLUEPRINT,
- * sementara validasi form mengikuti materi Spring MVC dosen.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

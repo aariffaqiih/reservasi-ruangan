@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.tup.reservasi.entity.Notifiable;
 import com.tup.reservasi.entity.Notification;
 import com.tup.reservasi.entity.Reservation;
+import com.tup.reservasi.entity.User;
 import com.tup.reservasi.repository.NotificationRepository;
 
 /*
@@ -90,5 +91,9 @@ public class NotificationService {
     public void deleteNotification(Long notificationId) {
         Notification notification = getNotificationById(notificationId);
         this.notificationRepository.delete(notification);
+        this.notifications.remove(notification);
+        if (notification.getPenerima() instanceof User user) {
+            user.getNotifications().remove(notification);
+        }
     }
 }
